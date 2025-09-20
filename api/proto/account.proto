@@ -1,1 +1,74 @@
-// Account service proto definitions
+syntax = "proto3";
+
+package account;
+
+option go_package = "github.com/YASHIRAI/pismo-task/api/proto/account";
+
+// Account service definition
+service AccountService {
+  rpc CreateAccount(CreateAccountRequest) returns (CreateAccountResponse);
+  rpc GetAccount(GetAccountRequest) returns (GetAccountResponse);
+  rpc UpdateAccount(UpdateAccountRequest) returns (UpdateAccountResponse);
+  rpc DeleteAccount(DeleteAccountRequest) returns (DeleteAccountResponse);
+  rpc GetBalance(GetBalanceRequest) returns (GetBalanceResponse);
+}
+
+// Account message
+message Account {
+  string id = 1;
+  string document_number = 2;
+  string account_type = 3;
+  double balance = 4;
+  int64 created_at = 5;
+  int64 updated_at = 6;
+}
+
+// Request/Response messages
+message CreateAccountRequest {
+  string document_number = 1;
+  string account_type = 2;
+  double initial_balance = 3;
+}
+
+message CreateAccountResponse {
+  Account account = 1;
+  string error = 2;
+}
+
+message GetAccountRequest {
+  string id = 1;
+}
+
+message GetAccountResponse {
+  Account account = 1;
+  string error = 2;
+}
+
+message UpdateAccountRequest {
+  string id = 1;
+  string document_number = 2;
+  string account_type = 3;
+}
+
+message UpdateAccountResponse {
+  Account account = 1;
+  string error = 2;
+}
+
+message DeleteAccountRequest {
+  string id = 1;
+}
+
+message DeleteAccountResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message GetBalanceRequest {
+  string account_id = 1;
+}
+
+message GetBalanceResponse {
+  double balance = 1;
+  string error = 2;
+}
