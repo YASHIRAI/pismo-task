@@ -1,4 +1,4 @@
-//go:generate protoc --go_out=../../proto/account --go-grpc_out=../../proto/account --go_opt=paths=source_relative --go-grpc_opt=paths=source_relative --proto_path=../../proto ../../proto/account/account.proto
+//go:generate protoc --go_out=../../proto/account --go-grpc_out=../../proto/account --go_opt=paths=source_relative --go-grpc_opt=paths=source_relative --proto_path=../../proto/account ../../proto/account/account.proto
 
 package main
 

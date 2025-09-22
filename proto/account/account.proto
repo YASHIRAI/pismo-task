@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package account;
 
-option go_package = "github.com/YASHIRAI/pismo-task/proto/account";
+option go_package = "./account";
 
 // Account service definition
 service AccountService {

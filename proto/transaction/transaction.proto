@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package transaction;
 
-option go_package = "github.com/YASHIRAI/pismo-task/proto/transaction";
+option go_package = "./transaction";
 
 // Transaction service definition
 service TransactionService {

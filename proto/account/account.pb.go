@@ -670,7 +670,7 @@ const file_account_proto_rawDesc = "" +
 	"\rUpdateAccount\x12\x1d.account.UpdateAccountRequest\x1a\x1e.account.UpdateAccountResponse\x12N\n" +
 	"\rDeleteAccount\x12\x1d.account.DeleteAccountRequest\x1a\x1e.account.DeleteAccountResponse\x12E\n" +
 	"\n" +
-	"GetBalance\x12\x1a.account.GetBalanceRequest\x1a\x1b.account.GetBalanceResponseB.Z,github.com/YASHIRAI/pismo-task/proto/accountb\x06proto3"
+	"GetBalance\x12\x1a.account.GetBalanceRequest\x1a\x1b.account.GetBalanceResponseB\vZ\t./accountb\x06proto3"
 
 var (
 	file_account_proto_rawDescOnce sync.Once

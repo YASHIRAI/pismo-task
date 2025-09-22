@@ -613,7 +613,7 @@ const file_transaction_proto_rawDesc = "" +
 	"\x11CreateTransaction\x12%.transaction.CreateTransactionRequest\x1a&.transaction.CreateTransactionResponse\x12Y\n" +
 	"\x0eGetTransaction\x12\".transaction.GetTransactionRequest\x1a#.transaction.GetTransactionResponse\x12n\n" +
 	"\x15GetTransactionHistory\x12).transaction.GetTransactionHistoryRequest\x1a*.transaction.GetTransactionHistoryResponse\x12Y\n" +
-	"\x0eProcessPayment\x12\".transaction.ProcessPaymentRequest\x1a#.transaction.ProcessPaymentResponseB2Z0github.com/YASHIRAI/pismo-task/proto/transactionb\x06proto3"
+	"\x0eProcessPayment\x12\".transaction.ProcessPaymentRequest\x1a#.transaction.ProcessPaymentResponseB\x0fZ\r./transactionb\x06proto3"
 
 var (
 	file_transaction_proto_rawDescOnce sync.Once
