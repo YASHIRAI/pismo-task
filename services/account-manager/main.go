@@ -12,6 +12,8 @@ import (
 	"github.com/google/uuid"
 	_ "github.com/lib/pq"
 	"google.golang.org/grpc"
+
+	pb "github.com/YASHIRAI/pismo-task/api/proto/account"
 )
 
 type Account struct {
@@ -24,6 +26,7 @@ type Account struct {
 }
 
 type AccountService struct {
+	pb.UnimplementedAccountServiceServer
 	db *sql.DB
 }
 
@@ -31,9 +34,9 @@ func NewAccountService(db *sql.DB) *AccountService {
 	return &AccountService{db: db}
 }
 
-func (s *AccountService) CreateAccount(ctx context.Context, req *CreateAccountRequest) (*CreateAccountResponse, error) {
+func (s *AccountService) CreateAccount(ctx context.Context, req *pb.CreateAccountRequest) (*pb.CreateAccountResponse, error) {
 	if req.DocumentNumber == "" || req.AccountType == "" {
-		return &CreateAccountResponse{Error: "missing required fields"}, nil
+		return &pb.CreateAccountResponse{Error: "missing required fields"}, nil
 	}
 
 	id := uuid.New().String()
@@ -45,12 +48,12 @@ func (s *AccountService) CreateAccount(ctx context.Context, req *CreateAccountRe
 	`, id, req.DocumentNumber, req.AccountType, req.InitialBalance, now, now)
 	if err != nil {
 		log.Printf("db insert failed: %v", err)
-		return &CreateAccountResponse{Error: "could not create account"}, nil
+		return &pb.CreateAccountResponse{Error: "could not create account"}, nil
 	}
 
-	return &CreateAccountResponse{
-		Account: &Account{
-			ID:             id,
+	return &pb.CreateAccountResponse{
+		Account: &pb.Account{
+			Id:             id,
 			DocumentNumber: req.DocumentNumber,
 			AccountType:    req.AccountType,
 			Balance:        req.InitialBalance,
@@ -60,9 +63,9 @@ func (s *AccountService) CreateAccount(ctx context.Context, req *CreateAccountRe
 	}, nil
 }
 
-func (s *AccountService) GetAccount(ctx context.Context, req *GetAccountRequest) (*GetAccountResponse, error) {
+func (s *AccountService) GetAccount(ctx context.Context, req *pb.GetAccountRequest) (*pb.GetAccountResponse, error) {
 	if req.Id == "" {
-		return &GetAccountResponse{Error: "id required"}, nil
+		return &pb.GetAccountResponse{Error: "id required"}, nil
 	}
 
 	var a Account
@@ -73,18 +76,25 @@ func (s *AccountService) GetAccount(ctx context.Context, req *GetAccountRequest)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return &GetAccountResponse{Error: "not found"}, nil
+			return &pb.GetAccountResponse{Error: "not found"}, nil
 		}
 		log.Printf("lookup failed: %v", err)
-		return &GetAccountResponse{Error: "db error"}, nil
+		return &pb.GetAccountResponse{Error: "db error"}, nil
 	}
 
-	return &GetAccountResponse{Account: &a}, nil
+	return &pb.GetAccountResponse{Account: &pb.Account{
+		Id:             a.ID,
+		DocumentNumber: a.DocumentNumber,
+		AccountType:    a.AccountType,
+		Balance:        a.Balance,
+		CreatedAt:      a.CreatedAt,
+		UpdatedAt:      a.UpdatedAt,
+	}}, nil
 }
 
-func (s *AccountService) UpdateAccount(ctx context.Context, req *UpdateAccountRequest) (*UpdateAccountResponse, error) {
+func (s *AccountService) UpdateAccount(ctx context.Context, req *pb.UpdateAccountRequest) (*pb.UpdateAccountResponse, error) {
 	if req.Id == "" {
-		return &UpdateAccountResponse{Error: "id required"}, nil
+		return &pb.UpdateAccountResponse{Error: "id required"}, nil
 	}
 
 	_, err := s.db.Exec(`
@@ -97,70 +107,36 @@ func (s *AccountService) UpdateAccount(ctx context.Context, req *UpdateAccountRe
 
 	if err != nil {
 		log.Printf("update failed: %v", err)
-		return &UpdateAccountResponse{Error: "could not update"}, nil
+		return &pb.UpdateAccountResponse{Error: "could not update"}, nil
 	}
 
-	acc, _ := s.GetAccount(ctx, &GetAccountRequest{Id: req.Id})
-	return &UpdateAccountResponse{Account: acc.Account}, nil
+	acc, _ := s.GetAccount(ctx, &pb.GetAccountRequest{Id: req.Id})
+	return &pb.UpdateAccountResponse{Account: acc.Account}, nil
 }
 
-func (s *AccountService) DeleteAccount(ctx context.Context, req *DeleteAccountRequest) (*DeleteAccountResponse, error) {
+func (s *AccountService) DeleteAccount(ctx context.Context, req *pb.DeleteAccountRequest) (*pb.DeleteAccountResponse, error) {
 	res, err := s.db.Exec(`DELETE FROM accounts WHERE id = $1`, req.Id)
 	if err != nil {
 		log.Printf("delete failed: %v", err)
-		return &DeleteAccountResponse{Error: "delete error"}, nil
+		return &pb.DeleteAccountResponse{Error: "delete error"}, nil
 	}
 	rows, _ := res.RowsAffected()
 	if rows == 0 {
-		return &DeleteAccountResponse{Error: "not found"}, nil
+		return &pb.DeleteAccountResponse{Error: "not found"}, nil
 	}
-	return &DeleteAccountResponse{Success: true}, nil
+	return &pb.DeleteAccountResponse{Success: true}, nil
 }
 
-func (s *AccountService) GetBalance(ctx context.Context, req *GetBalanceRequest) (*GetBalanceResponse, error) {
+func (s *AccountService) GetBalance(ctx context.Context, req *pb.GetBalanceRequest) (*pb.GetBalanceResponse, error) {
 	var bal float64
 	err := s.db.QueryRow(`SELECT balance FROM accounts WHERE id = $1`, req.AccountId).Scan(&bal)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return &GetBalanceResponse{Error: "account not found"}, nil
+			return &pb.GetBalanceResponse{Error: "account not found"}, nil
 		}
-		return &GetBalanceResponse{Error: "db error"}, nil
+		return &pb.GetBalanceResponse{Error: "db error"}, nil
 	}
-	return &GetBalanceResponse{Balance: bal}, nil
-}
-
-type CreateAccountRequest struct {
-	DocumentNumber string
-	AccountType    string
-	InitialBalance float64
-}
-type CreateAccountResponse struct {
-	Account *Account
-	Error   string
-}
-type GetAccountRequest struct{ Id string }
-type GetAccountResponse struct {
-	Account *Account
-	Error   string
-}
-type UpdateAccountRequest struct {
-	Id             string
-	DocumentNumber string
-	AccountType    string
-}
-type UpdateAccountResponse struct {
-	Account *Account
-	Error   string
-}
-type DeleteAccountRequest struct{ Id string }
-type DeleteAccountResponse struct {
-	Success bool
-	Error   string
-}
-type GetBalanceRequest struct{ AccountId string }
-type GetBalanceResponse struct {
-	Balance float64
-	Error   string
+	return &pb.GetBalanceResponse{Balance: bal}, nil
 }
 
 func initDatabase(db *sql.DB) error {
@@ -199,7 +175,6 @@ func main() {
 	}
 
 	svc := NewAccountService(db)
-	_ = svc // TODO: wire into grpc
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -210,8 +185,10 @@ func main() {
 		log.Fatal(err)
 	}
 
-	log.Printf("service on %s", port)
+	log.Printf("Account service listening on port %s", port)
 	grpcServer := grpc.NewServer()
+	pb.RegisterAccountServiceServer(grpcServer, svc)
+
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatal(err)
 	}

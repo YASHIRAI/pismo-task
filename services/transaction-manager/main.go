@@ -2,52 +2,46 @@ package main
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
 	"log"
 	"net"
 	"os"
 	"time"
 
 	"github.com/google/uuid"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	_ "github.com/lib/pq"
 	"google.golang.org/grpc"
 
 	pb "github.com/YASHIRAI/pismo-task/api/proto/transaction"
 )
 
 type Transaction struct {
-	ID            string    `bson:"_id,omitempty"`
-	AccountID     string    `bson:"account_id"`
-	OperationType string    `bson:"operation_type"`
-	Amount        float64   `bson:"amount"`
-	Description   string    `bson:"description"`
-	CreatedAt     time.Time `bson:"created_at"`
-	Status        string    `bson:"status"`
+	ID            string    `json:"id"`
+	AccountID     string    `json:"account_id"`
+	OperationType string    `json:"operation_type"`
+	Amount        float64   `json:"amount"`
+	Description   string    `json:"description"`
+	CreatedAt     time.Time `json:"created_at"`
+	Status        string    `json:"status"`
 }
 
 type Account struct {
-	ID             string    `bson:"_id,omitempty"`
-	DocumentNumber string    `bson:"document_number"`
-	AccountType    string    `bson:"account_type"`
-	Balance        float64   `bson:"balance"`
-	CreatedAt      time.Time `bson:"created_at"`
-	UpdatedAt      time.Time `bson:"updated_at"`
+	ID             string  `json:"id"`
+	DocumentNumber string  `json:"document_number"`
+	AccountType    string  `json:"account_type"`
+	Balance        float64 `json:"balance"`
+	CreatedAt      int64   `json:"created_at"`
+	UpdatedAt      int64   `json:"updated_at"`
 }
 
 type TransactionService struct {
 	pb.UnimplementedTransactionServiceServer
-	client         *mongo.Client
-	transactionsDB *mongo.Database
-	accountsDB     *mongo.Database
+	db *sql.DB
 }
 
-func NewTransactionService(client *mongo.Client, transactionsDB, accountsDB *mongo.Database) *TransactionService {
-	return &TransactionService{
-		client:         client,
-		transactionsDB: transactionsDB,
-		accountsDB:     accountsDB,
-	}
+func NewTransactionService(db *sql.DB) *TransactionService {
+	return &TransactionService{db: db}
 }
 
 func (s *TransactionService) CreateTransaction(ctx context.Context, req *pb.CreateTransactionRequest) (*pb.CreateTransactionResponse, error) {
@@ -57,21 +51,24 @@ func (s *TransactionService) CreateTransaction(ctx context.Context, req *pb.Crea
 
 	// Validate operation type
 	validOperations := map[string]bool{
-		"COMPRA_A_VISTA":   true,
-		"COMPRA_PARCELADA": true,
-		"SAQUE":            true,
-		"PAGAMENTO":        true,
+		"CASH_PURCHASE":        true,
+		"INSTALLMENT_PURCHASE": true,
+		"WITHDRAWAL":           true,
+		"PAYMENT":              true,
 	}
 	if !validOperations[req.OperationType] {
 		return &pb.CreateTransactionResponse{Error: "invalid operation type"}, nil
 	}
 
 	// Check if account exists
-	accountsCollection := s.accountsDB.Collection("accounts")
 	var account Account
-	err := accountsCollection.FindOne(ctx, bson.M{"_id": req.AccountId}).Decode(&account)
+	err := s.db.QueryRow(`
+		SELECT id, document_number, account_type, balance, created_at, updated_at
+		FROM accounts WHERE id = $1
+	`, req.AccountId).Scan(&account.ID, &account.DocumentNumber, &account.AccountType, &account.Balance, &account.CreatedAt, &account.UpdatedAt)
+
 	if err != nil {
-		if err == mongo.ErrNoDocuments {
+		if err == sql.ErrNoRows {
 			return &pb.CreateTransactionResponse{Error: "account not found"}, nil
 		}
 		log.Printf("account check failed: %v", err)
@@ -82,66 +79,48 @@ func (s *TransactionService) CreateTransaction(ctx context.Context, req *pb.Crea
 	now := time.Now()
 	status := "PENDING"
 
-	// For payment operations, we need to check balance
-	if req.OperationType == "PAGAMENTO" {
-		// Payment should be positive amount
+	if req.OperationType == "PAYMENT" {
 		if req.Amount <= 0 {
 			return &pb.CreateTransactionResponse{Error: "payment amount must be positive"}, nil
 		}
 
-		// Update account balance
-		_, err = accountsCollection.UpdateOne(ctx,
-			bson.M{"_id": req.AccountId},
-			bson.M{
-				"$inc": bson.M{"balance": req.Amount},
-				"$set": bson.M{"updated_at": now},
-			})
+		_, err = s.db.Exec(`
+			UPDATE accounts 
+			SET balance = balance + $1, updated_at = $2 
+			WHERE id = $3
+		`, req.Amount, now.Unix(), req.AccountId)
 		if err != nil {
 			log.Printf("balance update failed: %v", err)
 			return &pb.CreateTransactionResponse{Error: "could not process payment"}, nil
 		}
 		status = "COMPLETED"
 	} else {
-		// For debit operations, check if account has sufficient balance
-		// Debit operations should be negative amount
+	
 		amount := req.Amount
 		if amount >= 0 {
 			amount = -amount
 		}
 
-		// Check if account has sufficient balance
 		if account.Balance+amount < 0 {
 			return &pb.CreateTransactionResponse{Error: "insufficient balance"}, nil
 		}
 
-		// Update account balance
-		_, err = accountsCollection.UpdateOne(ctx,
-			bson.M{"_id": req.AccountId},
-			bson.M{
-				"$inc": bson.M{"balance": amount},
-				"$set": bson.M{"updated_at": now},
-			})
+		_, err = s.db.Exec(`
+			UPDATE accounts 
+			SET balance = balance + $1, updated_at = $2 
+			WHERE id = $3
+		`, amount, now.Unix(), req.AccountId)
 		if err != nil {
 			log.Printf("balance update failed: %v", err)
 			return &pb.CreateTransactionResponse{Error: "could not process transaction"}, nil
 		}
 		status = "COMPLETED"
-		req.Amount = amount // Update the amount to reflect the negative value
-	}
+		req.Amount = amount 
 
-	// Insert transaction record
-	transactionsCollection := s.transactionsDB.Collection("transactions")
-	transaction := Transaction{
-		ID:            id,
-		AccountID:     req.AccountId,
-		OperationType: req.OperationType,
-		Amount:        req.Amount,
-		Description:   req.Description,
-		CreatedAt:     now,
-		Status:        status,
-	}
-
-	_, err = transactionsCollection.InsertOne(ctx, transaction)
+	_, err = s.db.Exec(`
+		INSERT INTO transactions (id, account_id, operation_type, amount, description, created_at, status)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
+	`, id, req.AccountId, req.OperationType, req.Amount, req.Description, now.Unix(), status)
 	if err != nil {
 		log.Printf("transaction insert failed: %v", err)
 		return &pb.CreateTransactionResponse{Error: "could not create transaction"}, nil
@@ -165,11 +144,14 @@ func (s *TransactionService) GetTransaction(ctx context.Context, req *pb.GetTran
 		return &pb.GetTransactionResponse{Error: "id required"}, nil
 	}
 
-	transactionsCollection := s.transactionsDB.Collection("transactions")
 	var transaction Transaction
-	err := transactionsCollection.FindOne(ctx, bson.M{"_id": req.Id}).Decode(&transaction)
+	err := s.db.QueryRow(`
+		SELECT id, account_id, operation_type, amount, description, created_at, status
+		FROM transactions WHERE id = $1
+	`, req.Id).Scan(&transaction.ID, &transaction.AccountID, &transaction.OperationType, &transaction.Amount, &transaction.Description, &transaction.CreatedAt, &transaction.Status)
+
 	if err != nil {
-		if err == mongo.ErrNoDocuments {
+		if err == sql.ErrNoRows {
 			return &pb.GetTransactionResponse{Error: "not found"}, nil
 		}
 		log.Printf("transaction lookup failed: %v", err)
@@ -196,40 +178,40 @@ func (s *TransactionService) GetTransactionHistory(ctx context.Context, req *pb.
 
 	limit := req.Limit
 	if limit <= 0 || limit > 100 {
-		limit = 50 // default limit
+		limit = 50 
 	}
 	offset := req.Offset
 	if offset < 0 {
 		offset = 0
 	}
 
-	transactionsCollection := s.transactionsDB.Collection("transactions")
-
-	// Get total count
-	total, err := transactionsCollection.CountDocuments(ctx, bson.M{"account_id": req.AccountId})
+	var total int32
+	err := s.db.QueryRow(`
+		SELECT COUNT(*) FROM transactions WHERE account_id = $1
+	`, req.AccountId).Scan(&total)
 	if err != nil {
 		log.Printf("count query failed: %v", err)
 		return &pb.GetTransactionHistoryResponse{Error: "database error"}, nil
 	}
 
-	// Get transactions with pagination
-	opts := options.Find().
-		SetSort(bson.D{{"created_at", -1}}). // Sort by created_at descending
-		SetLimit(int64(limit)).
-		SetSkip(int64(offset))
-
-	cursor, err := transactionsCollection.Find(ctx, bson.M{"account_id": req.AccountId}, opts)
+	rows, err := s.db.Query(`
+		SELECT id, account_id, operation_type, amount, description, created_at, status
+		FROM transactions 
+		WHERE account_id = $1 
+		ORDER BY created_at DESC 
+		LIMIT $2 OFFSET $3
+	`, req.AccountId, limit, offset)
 	if err != nil {
 		log.Printf("transactions query failed: %v", err)
 		return &pb.GetTransactionHistoryResponse{Error: "database error"}, nil
 	}
-	defer cursor.Close(ctx)
+	defer rows.Close()
 
 	var transactions []*pb.Transaction
-	for cursor.Next(ctx) {
+	for rows.Next() {
 		var t Transaction
-		if err := cursor.Decode(&t); err != nil {
-			log.Printf("row decode failed: %v", err)
+		if err := rows.Scan(&t.ID, &t.AccountID, &t.OperationType, &t.Amount, &t.Description, &t.CreatedAt, &t.Status); err != nil {
+			log.Printf("row scan failed: %v", err)
 			continue
 		}
 		transactions = append(transactions, &pb.Transaction{
@@ -245,15 +227,14 @@ func (s *TransactionService) GetTransactionHistory(ctx context.Context, req *pb.
 
 	return &pb.GetTransactionHistoryResponse{
 		Transactions: transactions,
-		Total:        int32(total),
+		Total:        total,
 	}, nil
 }
 
 func (s *TransactionService) ProcessPayment(ctx context.Context, req *pb.ProcessPaymentRequest) (*pb.ProcessPaymentResponse, error) {
-	// ProcessPayment is essentially the same as CreateTransaction with PAGAMENTO operation type
 	createReq := &pb.CreateTransactionRequest{
 		AccountId:     req.AccountId,
-		OperationType: "PAGAMENTO",
+		OperationType: "PAYMENT",
 		Amount:        req.Amount,
 		Description:   req.Description,
 	}
@@ -269,75 +250,58 @@ func (s *TransactionService) ProcessPayment(ctx context.Context, req *pb.Process
 	}, nil
 }
 
-func initDatabase(client *mongo.Client, transactionsDB, accountsDB *mongo.Database) error {
-	// Create indexes for better performance
-	transactionsCollection := transactionsDB.Collection("transactions")
-	accountsCollection := accountsDB.Collection("accounts")
-
-	// Create indexes for transactions
-	_, err := transactionsCollection.Indexes().CreateMany(context.Background(), []mongo.IndexModel{
-		{
-			Keys: bson.D{{"account_id", 1}},
-		},
-		{
-			Keys: bson.D{{"created_at", -1}},
-		},
-		{
-			Keys: bson.D{{"account_id", 1}, {"created_at", -1}},
-		},
-	})
+func initDatabase(db *sql.DB) error {
+	_, err := db.Exec(`
+		CREATE TABLE IF NOT EXISTS transactions (
+			id VARCHAR(36) PRIMARY KEY,
+			account_id VARCHAR(36) NOT NULL,
+			operation_type VARCHAR(50) NOT NULL,
+			amount DECIMAL(15,2) NOT NULL,
+			description TEXT,
+			created_at TIMESTAMP NOT NULL,
+			status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+			FOREIGN KEY (account_id) REFERENCES accounts(id)
+		)
+	`)
 	if err != nil {
-		log.Printf("transactions index creation failed: %v", err)
+		return fmt.Errorf("transactions table creation failed: %w", err)
 	}
 
-	// Create indexes for accounts
-	_, err = accountsCollection.Indexes().CreateMany(context.Background(), []mongo.IndexModel{
-		{
-			Keys: bson.D{{"document_number", 1}},
-		},
-		{
-			Keys: bson.D{{"account_type", 1}},
-		},
-	})
+	_, err = db.Exec(`
+		CREATE INDEX IF NOT EXISTS idx_transactions_account_id ON transactions(account_id);
+		CREATE INDEX IF NOT EXISTS idx_transactions_created_at ON transactions(created_at DESC);
+		CREATE INDEX IF NOT EXISTS idx_transactions_account_created ON transactions(account_id, created_at DESC);
+		CREATE INDEX IF NOT EXISTS idx_transactions_operation_type ON transactions(operation_type);
+		CREATE INDEX IF NOT EXISTS idx_transactions_status ON transactions(status);
+	`)
 	if err != nil {
-		log.Printf("accounts index creation failed: %v", err)
+		log.Printf("index creation failed: %v", err)
 	}
 
 	return nil
 }
 
 func main() {
-	// MongoDB connection
-	mongoURI := os.Getenv("MONGODB_URI")
-	if mongoURI == "" {
-		mongoURI = "mongodb://localhost:27017"
+	databaseURL := os.Getenv("DATABASE_URL")
+	if databaseURL == "" {
+		databaseURL = "postgres://pismo:pismo123@localhost:5432/pismo?sslmode=disable"
 	}
 
-	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(mongoURI))
+	db, err := sql.Open("postgres", databaseURL)
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer func() {
-		if err = client.Disconnect(context.TODO()); err != nil {
-			log.Fatal(err)
-		}
-	}()
+	defer db.Close()
 
-	// Test the connection
-	if err = client.Ping(context.TODO(), nil); err != nil {
+	if err = db.Ping(); err != nil {
 		log.Fatal(err)
 	}
 
-	// Get databases
-	transactionsDB := client.Database("transactions")
-	accountsDB := client.Database("accounts")
-
-	// Initialize database indexes
-	if err := initDatabase(client, transactionsDB, accountsDB); err != nil {
+	if err := initDatabase(db); err != nil {
 		log.Fatal(err)
 	}
 
-	svc := NewTransactionService(client, transactionsDB, accountsDB)
+	svc := NewTransactionService(db)
 
 	port := os.Getenv("PORT")
 	if port == "" {
