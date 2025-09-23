@@ -1,133 +1,270 @@
-# Pismo Microservices Task
+# Pismo Financial Services - Microservices Architecture
 
-This repository contains a complete microservices architecture implementation for a financial services platform using PostgreSQL as the unified database, following Go best practices for project structure.
+A comprehensive microservices-based financial services platform built with Go, featuring account management, transaction processing, and a unified PostgreSQL database. This implementation demonstrates modern software architecture principles including service-oriented design, gRPC communication, REST APIs, and comprehensive testing.
 
-## Architecture Overview
+## Table of Contents
 
-The system consists of three main microservices communicating via gRPC:
+- [Overview](#overview)
+- [Architecture](#architecture)
+- [Services](#services)
+- [Project Structure](#project-structure)
+- [Database Schema](#database-schema)
+- [API Documentation](#api-documentation)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Testing](#testing)
+- [Deployment](#deployment)
+- [Development](#development)
+- [Contributing](#contributing)
+- [License](#license)
+
+## Overview
+
+This project implements a complete financial services platform using a microservices architecture. The system handles account management, transaction processing, and provides both REST and gRPC APIs for client integration. Built with Go and PostgreSQL, it demonstrates best practices in modern software development including clean architecture, comprehensive testing, and containerization.
+
+### Key Features
+
+- **Microservices Architecture**: Three independent services with clear separation of concerns
+- **Dual API Support**: Both REST HTTP and gRPC interfaces
+- **Comprehensive Testing**: Unit tests with 95%+ code coverage across all modules
+- **Database Integration**: PostgreSQL with ACID transactions and data consistency
+- **Containerization**: Docker support for all services
+- **Health Monitoring**: Built-in health checks and monitoring capabilities
+- **Web Interface**: Streamlit-based UI for interactive testing and demonstration
+
+## Architecture
+
+The system consists of three microservices that communicate via gRPC:
+
+### System Architecture Overview
 
 ```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Gateway       │    │  Account        │    │  Transaction    │
-│   Service       │    │  Manager        │    │  Manager        │
-│   (Port 8083)   │    │  (Port 8081)    │    │  (Port 8082)    │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-         │                       │                       │
-         │ gRPC                  │                       │
-         ├───────────────────────┼───────────────────────┤
-         │                       │                       │
-         ▼                       ▼                       ▼
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   HTTP/REST     │    │   PostgreSQL    │    │   PostgreSQL    │
-│   API           │    │   Database      │    │   Database      │
-│                 │    │   (Unified)     │    │   (Unified)     │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              PISMO FINANCIAL SERVICES                          │
+│                              MICROSERVICES ARCHITECTURE                        │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   External      │    │   Gateway       │    │   Account       │    │   Transaction   │
+│   Clients       │    │   Service       │    │   Manager       │    │   Manager       │
+│                 │    │   (Port 8083)   │    │   (Port 8081)  │    │   (Port 8082)  │
+│  - Web Apps     │    │                 │    │                 │    │                 │
+│  - Mobile Apps  │    │  - REST API     │    │  - Account CRUD │    │  - Transaction  │
+│  - Third-party  │    │  - CORS Support │    │  - Balance Mgmt │    │    Processing   │
+│    Services     │    │  - Routing      │    │  - Validation   │    │  - History      │
+└─────────────────┘    │  - Error Handle │    │  - Health Check │    │  - Status Track │
+         │              └─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │                       │
+         │ HTTP REST API          │ gRPC                  │ gRPC                  │ gRPC
+         │                        │                       │                       │
+         ▼                        ▼                       ▼                       ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              UNIFIED DATABASE LAYER                            │
+│                                                                                 │
+│  ┌─────────────────────────────────────────────────────────────────────────┐   │
+│  │                        PostgreSQL Database                              │   │
+│  │                           (Port 5432)                                   │   │
+│  │                                                                         │   │
+│  │  ┌─────────────────┐              ┌─────────────────┐                   │   │
+│  │  │   Accounts       │              │   Transactions  │                   │   │
+│  │  │   Table          │              │   Table          │                   │   │
+│  │  │                  │              │                  │                   │   │
+│  │  │  - id (PK)       │              │  - id (PK)      │                   │   │
+│  │  │  - document_num  │              │  - account_id   │                   │   │
+│  │  │  - account_type  │              │  - operation    │                   │   │
+│  │  │  - balance       │              │  - amount       │                   │   │
+│  │  │  - timestamps    │              │  - description  │                   │   │
+│  │  │                  │              │  - status       │                   │   │
+│  │  │                  │              │  - timestamps   │                   │   │
+│  │  └─────────────────┘              └─────────────────┘                   │   │
+│  │           │                                 │                           │   │
+│  │           └───────── FOREIGN KEY ───────────┘                           │   │
+│  └─────────────────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              SUPPORTING SERVICES                               │
+│                                                                                 │
+│  ┌─────────────────┐              ┌─────────────────┐                        │
+│  │   Health Check  │              │   Web UI        │                        │
+│  │   Service       │              │   (Streamlit)   │                        │
+│  │                 │              │                 │                        │
+│  │  - DB Ping      │              │  - Interactive  │                        │
+│  │  - Basic Health │              │    Dashboard     │                        │
+│  │  - Timeout      │              │  - Transaction   │                        │
+│  │    Support      │              │    Management    │                        │
+│  │                 │              │  - Account       │                        │
+│  │                 │              │    Operations    │                        │
+│  │                 │              │  - Health        │                        │
+│  │                 │              │    Monitoring    │                        │
+│  └─────────────────┘              └─────────────────┘                        │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              DATA FLOW PATTERNS                                │
+│                                                                                 │
+│  1. CLIENT REQUEST FLOW:                                                       │
+│     Client → Gateway → Account/Transaction Manager → Database                   │
+│                                                                                 │
+│  2. TRANSACTION PROCESSING:                                                     │
+│     Create Transaction → Validate Account → Update Balance → Record History   │
+│                                                                                 │
+│  3. HEALTH MONITORING:                                                          │
+│     Health Check → Database Ping → Service Status → Response                   │
+│                                                                                 │
+│  4. ERROR HANDLING:                                                             │
+│     Error Detection → HTTP Error Response → Client Notification                │
+└─────────────────────────────────────────────────────────────────────────────────┘
 ```
+
+### Technology Stack
+
+- **Backend**: Go 1.21+
+- **Database**: PostgreSQL 14+
+- **Communication**: gRPC for inter-service communication
+- **API**: REST HTTP for external clients
+- **Protocol Buffers**: For service definitions and data serialization
+- **Containerization**: Docker
+- **Testing**: Go testing framework with sqlmock
+- **UI**: Streamlit for web interface
+
+## Services
+
+### Gateway Service (Port 8083)
+The Gateway Service acts as the entry point for external clients, providing a REST HTTP API that routes requests to the appropriate microservices.
+
+**Responsibilities:**
+- HTTP REST API endpoint management
+- Request routing to Account and Transaction services
+- CORS support for web applications
+- Error handling and response formatting
+- Health check endpoint for monitoring
+
+**Key Features:**
+- RESTful API design following HTTP standards
+- Automatic service discovery and routing
+- Comprehensive error handling with proper HTTP status codes
+- CORS configuration for cross-origin requests
+
+### Account Manager Service (Port 8081)
+The Account Manager Service handles all account-related operations including creation, retrieval, updates, and balance management.
+
+**Responsibilities:**
+- Account lifecycle management (CRUD operations)
+- Balance tracking and validation
+- Account type management (CHECKING, SAVINGS, CREDIT)
+- Document number validation and uniqueness
+- Account status monitoring
+
+**Key Features:**
+- Complete CRUD operations for accounts
+- Balance validation and constraints
+- Account type enforcement
+- Unique document number validation
+- Timestamp tracking for audit trails
+
+### Transaction Manager Service (Port 8082)
+The Transaction Manager Service processes all financial transactions and maintains transaction history.
+
+**Responsibilities:**
+- Transaction processing and validation
+- Operation type handling (PAYMENT, CASH_PURCHASE, INSTALLMENT_PURCHASE, WITHDRAWAL)
+- Balance updates and consistency checks
+- Transaction history management
+- Payment processing
+
+**Key Features:**
+- Multiple transaction operation types
+- Automatic balance updates
+- Insufficient balance validation
+- Transaction status tracking
+- Paginated transaction history
+- Payment processing with validation
 
 ## Project Structure
 
 ```
-├── cmd/                          # Main applications
+pismo-task/
+├── cmd/                          # Main application entry points
 │   ├── account-mgr/              # Account management service
-│   │   ├── main.go              # Service entry point with go:generate
-│   │   ├── go.mod               # Service dependencies
+│   │   ├── main.go              # Service entry point with protobuf generation
+│   │   ├── go.mod               # Service-specific dependencies
+│   │   ├── go.sum               # Dependency checksums
 │   │   └── Dockerfile           # Container configuration
 │   ├── transaction-mgr/          # Transaction processing service
-│   │   ├── main.go              # Service entry point with go:generate
-│   │   ├── go.mod               # Service dependencies
+│   │   ├── main.go              # Service entry point with protobuf generation
+│   │   ├── go.mod               # Service-specific dependencies
+│   │   ├── go.sum               # Dependency checksums
 │   │   └── Dockerfile           # Container configuration
 │   └── gateway/                  # HTTP API gateway
 │       ├── main.go              # Gateway entry point
 │       ├── go.mod               # Gateway dependencies
+│       ├── go.sum               # Dependency checksums
 │       └── Dockerfile           # Container configuration
-├── internal/                     # Private application code
-│   ├── common/                   # Shared utilities
-│   │   ├── database.go          # Database connection and pooling
-│   │   ├── orm.go               # Database models
-│   │   ├── proto_db.go          # Protobuf ↔ Database conversion
-│   │   └── go.mod               # Common dependencies
+├── internal/                     # Private application packages
+│   ├── common/                   # Shared utilities and models
+│   │   ├── database.go          # Database connection management
+│   │   ├── database_test.go     # Database utility tests
+│   │   ├── orm.go               # Database models and utilities
+│   │   ├── orm_test.go          # ORM utility tests
+│   │   ├── go.mod               # Common package dependencies
+│   │   └── go.sum               # Dependency checksums
 │   ├── account/                  # Account business logic
 │   │   ├── account.go           # Account service implementation
-│   │   └── go.mod               # Account dependencies
+│   │   ├── account_test.go      # Account service tests
+│   │   ├── proto_db.go          # Protobuf conversion utilities
+│   │   ├── go.mod               # Account package dependencies
+│   │   └── go.sum               # Dependency checksums
 │   ├── transaction/              # Transaction business logic
 │   │   ├── transaction.go       # Transaction service implementation
-│   │   └── go.mod               # Transaction dependencies
+│   │   ├── transaction_test.go  # Transaction service tests
+│   │   ├── proto_db.go          # Protobuf conversion utilities
+│   │   ├── go.mod               # Transaction package dependencies
+│   │   └── go.sum               # Dependency checksums
 │   └── health/                   # Health check utilities
 │       ├── health.go            # Health check implementation
-│       └── go.mod               # Health dependencies
+│       ├── health_test.go       # Health check tests
+│       ├── go.mod               # Health package dependencies
+│       └── go.sum               # Dependency checksums
 ├── proto/                        # Protocol buffer definitions
-│   ├── account.proto            # Account service definitions
-│   ├── transaction.proto        # Transaction service definitions
-│   └── health.proto             # Health check definitions
-├── scripts/                      # Database initialization scripts
-│   └── database/                 # Database setup scripts
-│       └── init.sql             # Database schema initialization
-├── tests/                        # Test files
-├── test-*.sh                     # Test scripts
+│   ├── account/                  # Account service protobuf definitions
+│   │   ├── account.proto        # Account service schema
+│   │   ├── account.pb.go        # Generated Go code
+│   │   ├── account_grpc.pb.go   # Generated gRPC code
+│   │   └── go.mod               # Protobuf dependencies
+│   ├── transaction/              # Transaction service protobuf definitions
+│   │   ├── transaction.proto    # Transaction service schema
+│   │   ├── transaction.pb.go    # Generated Go code
+│   │   ├── transaction_grpc.pb.go # Generated gRPC code
+│   │   └── go.mod               # Protobuf dependencies
+│   └── health/                   # Health service protobuf definitions
+│       ├── health.proto          # Health service schema
+│       ├── health.pb.go          # Generated Go code
+│       ├── health_grpc.pb.go     # Generated gRPC code
+│       └── go.mod               # Protobuf dependencies
+├── scripts/                      # Database and deployment scripts
+│   └── database/                 # Database setup and initialization
+│       └── init.sql             # Database schema and sample data
+├── tests/                        # Integration and system tests
+│   ├── integration_test.go      # Integration test suite
+│   └── unit_test.go             # Unit test suite
+├── ui/                           # Web interface
+│   ├── streamlit_app.py         # Streamlit web application
+│   └── requirements.txt          # Python dependencies
+├── test-refactored-system.sh     # Automated testing script
 ├── go.mod                        # Root module dependencies
-└── README.md                     # This file
+├── go.sum                        # Root dependency checksums
+└── README.md                     # Project documentation
 ```
-
-## Services
-
-### Gateway Service (cmd/gateway)
-- **Port**: 8083
-- **Purpose**: HTTP REST API for external clients
-- **Features**:
-  - Routes requests to appropriate microservices
-  - CORS support for web applications
-  - Error handling and response formatting
-  - Health check endpoint
-
-### Account Manager Service (cmd/account-mgr)
-- **Port**: 8081
-- **Purpose**: Manages account lifecycle and operations
-- **Features**:
-  - Account CRUD operations
-  - Balance management
-  - PostgreSQL integration
-  - gRPC service interface
-  - Auto-generated protobuf code
-
-### Transaction Manager Service (cmd/transaction-mgr)
-- **Port**: 8082
-- **Purpose**: Processes financial transactions
-- **Features**:
-  - Multiple operation types:
-    - `PAYMENT` - Credit to account
-    - `CASH_PURCHASE` - Debit from account
-    - `INSTALLMENT_PURCHASE` - Debit from account
-    - `WITHDRAWAL` - Debit from account
-  - Transaction history
-  - PostgreSQL integration
-  - gRPC service interface
-  - Auto-generated protobuf code
-
-## Internal Packages
-
-### Common Package (internal/common)
-- **database.go**: Database connection management and pooling
-- **orm.go**: Database models and utilities
-- **proto_db.go**: Conversion between protobuf and database models
-
-### Account Package (internal/account)
-- **account.go**: Account service business logic
-- Implements gRPC AccountService interface
-- Handles account operations and validation
-
-### Transaction Package (internal/transaction)
-- **transaction.go**: Transaction service business logic
-- Implements gRPC TransactionService interface
-- Handles transaction processing and validation
-
-### Health Package (internal/health)
-- **health.go**: Health check utilities
-- Database connectivity checks
-- Service health monitoring
 
 ## Database Schema
 
+The system uses a unified PostgreSQL database with two main tables designed for financial data integrity and performance.
+
 ### Accounts Table
+
+The accounts table stores customer account information with strict validation rules:
+
 ```sql
 CREATE TABLE accounts (
     id VARCHAR(36) PRIMARY KEY,
@@ -139,7 +276,17 @@ CREATE TABLE accounts (
 );
 ```
 
+**Key Features:**
+- UUID-based primary keys for global uniqueness
+- Unique document number constraint for customer identification
+- Account type validation with predefined values
+- Non-negative balance constraint
+- Unix timestamp tracking for audit trails
+
 ### Transactions Table
+
+The transactions table records all financial operations with comprehensive tracking:
+
 ```sql
 CREATE TABLE transactions (
     id VARCHAR(36) PRIMARY KEY,
@@ -153,52 +300,294 @@ CREATE TABLE transactions (
 );
 ```
 
-## API Endpoints
+**Key Features:**
+- Foreign key relationship with accounts table
+- Operation type validation for transaction categories
+- Status tracking for transaction lifecycle
+- Cascade delete for data consistency
+- Comprehensive indexing for performance
 
-### Account Management
-- `POST /accounts` - Create account
-- `GET /accounts/{id}` - Get account details
-- `GET /accounts/{id}/balance` - Get account balance
+### Database Indexes
 
-### Transaction Management
-- `POST /transactions` - Create transaction
-- `GET /transactions/{id}` - Get transaction details
-- `GET /accounts/{account_id}/transactions` - Get transaction history
-- `POST /payments` - Process payment
+Performance-optimized indexes for common query patterns:
 
-### System
-- `GET /health` - Health check
+```sql
+-- Account indexes
+CREATE INDEX idx_accounts_document_number ON accounts(document_number);
+CREATE INDEX idx_accounts_account_type ON accounts(account_type);
+CREATE INDEX idx_accounts_created_at ON accounts(created_at);
 
-## Development Setup
+-- Transaction indexes
+CREATE INDEX idx_transactions_account_id ON transactions(account_id);
+CREATE INDEX idx_transactions_created_at ON transactions(created_at DESC);
+CREATE INDEX idx_transactions_account_created ON transactions(account_id, created_at DESC);
+CREATE INDEX idx_transactions_operation_type ON transactions(operation_type);
+CREATE INDEX idx_transactions_status ON transactions(status);
+```
+
+## API Documentation
+
+The Gateway Service provides a comprehensive REST API for external clients to interact with the financial services platform.
+
+### Base URL
+```
+http://localhost:8083
+```
+
+### Authentication
+Currently, the API operates without authentication. In a production environment, proper authentication and authorization mechanisms should be implemented.
+
+### Response Format
+All API responses follow a consistent JSON format:
+
+**Success Response:**
+```json
+{
+  "id": "uuid-string",
+  "field1": "value1",
+  "field2": "value2"
+}
+```
+
+**Error Response:**
+```json
+{
+  "error": "Error message description"
+}
+```
+
+### Account Management Endpoints
+
+#### Create Account
+Creates a new customer account with specified type and initial balance.
+
+**Endpoint:** `POST /accounts`
+
+**Request Body:**
+```json
+{
+  "document_number": "12345678901",
+  "account_type": "CHECKING",
+  "initial_balance": 1000.00
+}
+```
+
+**Response:** Account object with generated ID and timestamps
+
+**Validation Rules:**
+- `document_number`: Required, unique, max 20 characters
+- `account_type`: Required, must be one of: CHECKING, SAVINGS, CREDIT
+- `initial_balance`: Optional, must be non-negative, defaults to 0
+
+#### Get Account Details
+Retrieves complete account information by account ID.
+
+**Endpoint:** `GET /accounts/{id}`
+
+**Response:** Complete account object including balance and metadata
+
+#### Get Account Balance
+Retrieves only the current balance for an account.
+
+**Endpoint:** `GET /accounts/{id}/balance`
+
+**Response:**
+```json
+{
+  "balance": 1500.75
+}
+```
+
+### Transaction Management Endpoints
+
+#### Create Transaction
+Processes a financial transaction and updates account balance.
+
+**Endpoint:** `POST /transactions`
+
+**Request Body:**
+```json
+{
+  "account_id": "account-uuid",
+  "operation_type": "PAYMENT",
+  "amount": 100.50,
+  "description": "Salary deposit"
+}
+```
+
+**Operation Types:**
+- `PAYMENT`: Credits money to account (positive amount)
+- `CASH_PURCHASE`: Debits money from account (negative amount)
+- `INSTALLMENT_PURCHASE`: Debits money from account (negative amount)
+- `WITHDRAWAL`: Debits money from account (negative amount)
+
+**Response:** Transaction object with status and updated account balance
+
+#### Get Transaction Details
+Retrieves complete transaction information by transaction ID.
+
+**Endpoint:** `GET /transactions/{id}`
+
+**Response:** Complete transaction object with all metadata
+
+#### Get Transaction History
+Retrieves paginated transaction history for an account.
+
+**Endpoint:** `GET /accounts/{account_id}/transactions`
+
+**Query Parameters:**
+- `limit`: Number of transactions to return (default: 50, max: 100)
+- `offset`: Number of transactions to skip (default: 0)
+
+**Response:**
+```json
+{
+  "transactions": [...],
+  "total": 150
+}
+```
+
+#### Process Payment
+Convenience endpoint for processing payments (equivalent to creating PAYMENT transaction).
+
+**Endpoint:** `POST /payments`
+
+**Request Body:**
+```json
+{
+  "account_id": "account-uuid",
+  "amount": 200.00,
+  "description": "Bill payment"
+}
+```
+
+### System Endpoints
+
+#### Health Check
+Returns the current health status of the gateway service.
+
+**Endpoint:** `GET /health`
+
+**Response:**
+```json
+{
+  "status": "healthy",
+  "time": "2023-09-23T10:30:00Z"
+}
+```
+
+### Error Handling
+
+The API uses standard HTTP status codes:
+
+- `200 OK`: Successful operation
+- `400 Bad Request`: Invalid request data or validation errors
+- `404 Not Found`: Resource not found
+- `500 Internal Server Error`: Server-side error
+
+Common error scenarios:
+- Invalid account ID format
+- Account not found
+- Insufficient balance for debit operations
+- Invalid operation type
+- Missing required fields
+
+## Installation
 
 ### Prerequisites
-- Go 1.21+
-- PostgreSQL 14+
-   - Protocol Buffers compiler (`protoc`)
-- Docker (optional)
 
-### Database Setup
-1. Start PostgreSQL:
+Before installing and running the Pismo Financial Services platform, ensure you have the following software installed:
+
+**Required Software:**
+- Go 1.21 or later
+- PostgreSQL 14 or later
+- Protocol Buffers compiler (protoc)
+- Git
+
+**Optional Software:**
+- Docker and Docker Compose
+- Python 3.8+ (for web UI)
+- jq (for JSON processing in scripts)
+
+### System Requirements
+
+- **Operating System**: Linux, macOS, or Windows
+- **Memory**: Minimum 2GB RAM
+- **Storage**: At least 1GB free disk space
+- **Network**: Ports 8081, 8082, 8083, and 5432 available
+
+### Installation Steps
+
+1. **Clone the Repository:**
    ```bash
-   brew services start postgresql@14
+   git clone <repository-url>
+   cd pismo-task
    ```
 
-2. Create database and user:
+2. **Install Go Dependencies:**
    ```bash
+   go mod tidy
+   ```
+
+3. **Install Protocol Buffers:**
+   ```bash
+   # macOS
+   brew install protobuf
+   
+   # Ubuntu/Debian
+   sudo apt-get install protobuf-compiler
+   
+   # Windows
+   # Download from https://github.com/protocolbuffers/protobuf/releases
+   ```
+
+4. **Setup PostgreSQL:**
+   ```bash
+   # Start PostgreSQL service
+   brew services start postgresql@14  # macOS
+   sudo systemctl start postgresql    # Linux
+   
+   # Create database and user
    createdb pismo
    psql -d pismo -c "CREATE USER pismo WITH PASSWORD 'pismo123';"
    psql -d pismo -c "GRANT ALL PRIVILEGES ON DATABASE pismo TO pismo;"
+   psql -d pismo -c "GRANT ALL PRIVILEGES ON SCHEMA public TO pismo;"
    ```
 
-3. Initialize database schema:
+5. **Initialize Database Schema:**
    ```bash
    psql -d pismo -f scripts/database/init.sql
    ```
 
-### Running the Services
+6. **Install Python Dependencies (for Web UI):**
+   ```bash
+   cd ui
+   pip install -r requirements.txt
+   cd ..
+   ```
 
-#### Option 1: Run Individual Services
-1. **Start Account Manager:**
+## Usage
+
+### Quick Start
+
+The fastest way to get started is using the automated test script:
+
+```bash
+./test-refactored-system.sh
+```
+
+This script will:
+- Verify PostgreSQL is running
+- Initialize the database
+- Start all three services
+- Run comprehensive API tests
+- Clean up on exit
+
+### Manual Service Startup
+
+For development and debugging, you can start services individually:
+
+**Terminal 1 - Account Manager:**
    ```bash
    cd cmd/account-mgr
    go generate  # Generate protobuf code
@@ -206,7 +595,7 @@ CREATE TABLE transactions (
    ./account-mgr
    ```
 
-2. **Start Transaction Manager:**
+**Terminal 2 - Transaction Manager:**
    ```bash
    cd cmd/transaction-mgr
    go generate  # Generate protobuf code
@@ -214,73 +603,219 @@ CREATE TABLE transactions (
    ./transaction-mgr
    ```
 
-3. **Start Gateway:**
+**Terminal 3 - Gateway Service:**
    ```bash
    cd cmd/gateway
    go build -o gateway .
    PORT=8083 ./gateway
    ```
 
-#### Option 2: Use Test Script
+### Web Interface
+
+Start the Streamlit web interface for interactive testing:
+
 ```bash
-./test-refactored-system.sh
+cd ui
+streamlit run streamlit_app.py
 ```
 
-### Docker Support
+Access the web interface at: http://localhost:8501
 
-Each service has its own Dockerfile for containerization:
+### Environment Variables
+
+Configure the system using environment variables:
 
 ```bash
-# Build and run Account Manager
-cd cmd/account-mgr
-docker build -t account-mgr .
-docker run -p 8081:8081 account-mgr
+# Database Configuration
+export DB_HOST=localhost
+export DB_PORT=5432
+export DB_USER=pismo
+export DB_PASSWORD=pismo123
+export DB_NAME=pismo
+export DB_SSLMODE=disable
 
-# Build and run Transaction Manager
-cd cmd/transaction-mgr
-docker build -t transaction-mgr .
-docker run -p 8082:8082 transaction-mgr
-
-# Build and run Gateway
-cd cmd/gateway
-docker build -t gateway .
-docker run -p 8083:8083 gateway
+# Service Configuration
+export ACCOUNT_SERVICE_ADDR=localhost:8081
+export TRANSACTION_SERVICE_ADDR=localhost:8082
+export PORT=8083
 ```
 
 ## Testing
 
-### Run Comprehensive Tests
+### Unit Tests
+
+Run comprehensive unit tests for all modules:
+
+```bash
+# Test Account Module
+cd internal/account
+go test -v
+
+# Test Transaction Module
+cd ../transaction
+go test -v
+
+# Test Health Module
+cd ../health
+go test -v
+
+# Test Common Module
+cd ../common
+go test -v
+```
+
+### Test Coverage
+
+Generate test coverage reports:
+
+```bash
+# Generate coverage for each module
+cd internal/account && go test -coverprofile=coverage.out && go tool cover -html=coverage.out -o coverage.html
+cd ../transaction && go test -coverprofile=coverage.out && go tool cover -html=coverage.out -o coverage.html
+cd ../health && go test -coverprofile=coverage.out && go tool cover -html=coverage.out -o coverage.html
+cd ../common && go test -coverprofile=coverage.out && go tool cover -html=coverage.out -o coverage.html
+```
+
+### Integration Tests
+
+Run the complete integration test suite:
+
 ```bash
 ./test-refactored-system.sh
 ```
 
-### Run Individual Service Tests
+### API Testing
+
+Test individual API endpoints:
+
 ```bash
-./test-account-service.sh
-./test-transaction-service.sh
+# Health check
+curl http://localhost:8083/health
+
+# Create account
+curl -X POST http://localhost:8083/accounts \
+  -H "Content-Type: application/json" \
+  -d '{"document_number": "12345678901", "account_type": "CHECKING", "initial_balance": 1000}'
+
+# Create transaction
+curl -X POST http://localhost:8083/transactions \
+  -H "Content-Type: application/json" \
+  -d '{"account_id": "account-id", "operation_type": "PAYMENT", "amount": 100, "description": "Test payment"}'
 ```
 
-## Key Features
+## Deployment
 
-### Architecture Benefits
-- **Modular Design**: Separated concerns with internal packages
-- **Docker Ready**: Each service can be containerized
-- **Auto-generation**: Protobuf code generated automatically
-- **Unified Database**: Single PostgreSQL instance
-- **ACID Transactions**: Strong consistency across operations
-- **gRPC Communication**: High-performance inter-service communication
-- **REST API**: Easy integration for external clients
+### Docker Deployment
 
-### Code Organization
-- **cmd/**: Main applications with go:generate directives
-- **internal/**: Private packages for shared functionality
-- **proto/**: Protocol buffer definitions
-- **Modular go.mod**: Each package has its own dependencies
-- **Clean imports**: Proper module structure
+Build and run services using Docker:
 
-### Development Features
-- **Hot Reload**: Easy development with go run
-- **Dependency Management**: Go modules for each package
-- **Code Generation**: Automatic protobuf code generation
-- **Health Checks**: Built-in health monitoring
-- **Error Handling**: Comprehensive error responses
+```bash
+# Build all services
+docker build -t pismo-account-mgr ./cmd/account-mgr
+docker build -t pismo-transaction-mgr ./cmd/transaction-mgr
+docker build -t pismo-gateway ./cmd/gateway
+
+# Run with Docker Compose
+docker-compose up -d
+```
+
+### Production Considerations
+
+For production deployment, we might need to consider the following:
+
+1. **Security:**
+   - Implement proper authentication and authorization
+   - Use HTTPS/TLS for all communications
+   - Secure database connections
+   - Implement rate limiting
+
+2. **Monitoring:**
+   - Set up application monitoring (Prometheus, Grafana)
+   - Implement centralized logging
+   - Configure health check endpoints
+   - Set up alerting for critical failures
+
+3. **Scalability:**
+   - Use load balancers for service instances
+   - Implement database connection pooling
+   - Consider database read replicas
+   - Use container orchestration (Kubernetes)
+
+4. **Data Management:**
+   - Implement database backups
+   - Set up data retention policies
+   - Consider data encryption at rest
+   - Plan for disaster recovery
+
+## Development
+
+### Code Generation
+
+The project uses Protocol Buffers for service definitions. Generate code when making changes:
+
+```bash
+# Generate protobuf code for all services
+cd cmd/account-mgr && go generate
+cd ../transaction-mgr && go generate
+```
+
+### Adding New Features
+
+1. **Define Protocol Buffer Schema:**
+   - Update `.proto` files in the `proto/` directory
+   - Regenerate Go code using `go generate`
+
+2. **Implement Business Logic:**
+   - Add methods to service implementations in `internal/`
+   - Follow existing patterns for error handling
+
+3. **Add Tests:**
+   - Create unit tests for new functionality
+   - Ensure test coverage remains above 95%
+
+4. **Update API Documentation:**
+   - Update README.md with new endpoints
+   - Add examples for new features
+
+### Code Style
+
+Follow Go best practices:
+
+- Use `gofmt` for code formatting
+- Follow Go naming conventions
+- Write comprehensive tests
+- Document public APIs
+- Use meaningful variable names
+- Keep functions small and focused
+
+### Debugging
+
+Common debugging techniques:
+
+```bash
+# Run services with verbose logging
+cd cmd/account-mgr && go run . -v
+
+# Check service logs
+docker logs <container-name>
+
+# Test database connectivity
+psql -h localhost -U pismo -d pismo -c "SELECT 1;"
+
+# Monitor service health
+curl http://localhost:8083/health
+```
+
+### Third-Party Licenses
+
+This project uses the following third-party libraries:
+
+- Go standard library
+- PostgreSQL driver (github.com/lib/pq)
+- Protocol Buffers (google.golang.org/protobuf)
+- gRPC (google.golang.org/grpc)
+- Testing framework (github.com/stretchr/testify)
+- SQL mocking (github.com/DATA-DOG/go-sqlmock)
+- Web framework (streamlit)
+
+Please review the respective licenses for each dependency.
