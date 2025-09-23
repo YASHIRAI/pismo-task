@@ -788,6 +788,56 @@ Follow Go best practices:
 - Use meaningful variable names
 - Keep functions small and focused
 
+### Go Documentation Generation
+
+The project includes comprehensive Go doc comments for all public functions and types. You can generate and view documentation using the following commands:
+
+#### View Package Documentation
+
+```bash
+# View documentation for a specific package
+go doc github.com/YASHIRAI/pismo-task/internal/account
+go doc github.com/YASHIRAI/pismo-task/internal/transaction
+go doc github.com/YASHIRAI/pismo-task/internal/common
+go doc github.com/YASHIRAI/pismo-task/internal/health
+
+# View documentation for a specific function
+go doc github.com/YASHIRAI/pismo-task/internal/account.NewService
+go doc github.com/YASHIRAI/pismo-task/internal/account.Service.CreateAccount
+go doc github.com/YASHIRAI/pismo-task/internal/transaction.Service.CreateTransaction
+```
+
+#### Generate HTML Documentation
+
+```bash
+# Generate HTML documentation for the entire project
+godoc -http=:6060
+
+# Then open http://localhost:6060/pkg/github.com/YASHIRAI/pismo-task/ in your browser
+```
+
+#### View Documentation in Terminal
+
+```bash
+# View all exported functions and types in a package
+go doc -all github.com/YASHIRAI/pismo-task/internal/account
+
+# View documentation for a specific type
+go doc github.com/YASHIRAI/pismo-task/internal/common.DatabaseManager
+
+# View documentation for a specific method
+go doc github.com/YASHIRAI/pismo-task/internal/account.Service.GetBalance
+```
+
+#### Documentation Features
+
+The codebase includes:
+
+- **Function Documentation**: Every public function has a clear description of its purpose, parameters, and return values
+- **Type Documentation**: All structs and types are documented with their purpose and usage
+- **Package Documentation**: Each package has documentation explaining its role in the system
+- **Example Usage**: Documentation includes context about when and how to use each function
+
 ### Debugging
 
 Common debugging techniques:

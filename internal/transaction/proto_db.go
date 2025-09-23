@@ -5,7 +5,8 @@ import (
 	pbTransaction "github.com/YASHIRAI/pismo-task/proto/transaction"
 )
 
-// ConvertTransactionToProto converts database Transaction to protobuf Transaction
+// ConvertTransactionToProto converts a database Transaction struct to a protobuf Transaction message.
+// This function maps all fields from the common.Transaction to the corresponding protobuf fields.
 func ConvertTransactionToProto(dbTransaction *common.Transaction) *pbTransaction.Transaction {
 	return &pbTransaction.Transaction{
 		Id:            dbTransaction.ID,
@@ -18,7 +19,8 @@ func ConvertTransactionToProto(dbTransaction *common.Transaction) *pbTransaction
 	}
 }
 
-// ConvertTransactionFromProto converts protobuf Transaction to database Transaction
+// ConvertTransactionFromProto converts a protobuf Transaction message to a database Transaction struct.
+// This function maps all fields from the protobuf Transaction to the corresponding common.Transaction fields.
 func ConvertTransactionFromProto(pbTransaction *pbTransaction.Transaction) *common.Transaction {
 	return &common.Transaction{
 		ID:            pbTransaction.Id,
@@ -31,7 +33,8 @@ func ConvertTransactionFromProto(pbTransaction *pbTransaction.Transaction) *comm
 	}
 }
 
-// ConvertCreateTransactionRequestToTransaction converts CreateTransactionRequest to database Transaction
+// ConvertCreateTransactionRequestToTransaction converts a CreateTransactionRequest to a database Transaction struct.
+// It sets the current timestamp for the created_at field and initializes status as PENDING.
 func ConvertCreateTransactionRequestToTransaction(req *pbTransaction.CreateTransactionRequest) *common.Transaction {
 	now := common.GetCurrentTimestamp()
 	return &common.Transaction{
@@ -44,7 +47,8 @@ func ConvertCreateTransactionRequestToTransaction(req *pbTransaction.CreateTrans
 	}
 }
 
-// ConvertProcessPaymentRequestToTransaction converts ProcessPaymentRequest to database Transaction
+// ConvertProcessPaymentRequestToTransaction converts a ProcessPaymentRequest to a database Transaction struct.
+// It sets the operation type to PAYMENT, uses the current timestamp, and initializes status as PENDING.
 func ConvertProcessPaymentRequestToTransaction(req *pbTransaction.ProcessPaymentRequest) *common.Transaction {
 	now := common.GetCurrentTimestamp()
 	return &common.Transaction{

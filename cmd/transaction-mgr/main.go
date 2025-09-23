@@ -14,6 +14,9 @@ import (
 	pb "github.com/YASHIRAI/pismo-task/proto/transaction"
 )
 
+// main starts the Transaction Manager gRPC service.
+// It initializes the database connection, sets up the schema, and starts the gRPC server on port 8082.
+// The service handles transaction-related operations including creation, retrieval, and payment processing.
 func main() {
 	dbManager, err := common.NewDatabaseManager()
 	if err != nil {

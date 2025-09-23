@@ -18,11 +18,15 @@ import (
 	pbTransaction "github.com/YASHIRAI/pismo-task/proto/transaction"
 )
 
+// GatewayService provides HTTP REST API endpoints that route requests to gRPC services.
+// It acts as a gateway between external clients and the internal microservices.
 type GatewayService struct {
 	accountClient     pbAccount.AccountServiceClient
 	transactionClient pbTransaction.TransactionServiceClient
 }
 
+// NewGatewayService creates a new gateway service instance.
+// It takes gRPC client connections for account and transaction services and returns a configured GatewayService.
 func NewGatewayService(accountConn, transactionConn *grpc.ClientConn) *GatewayService {
 	return &GatewayService{
 		accountClient:     pbAccount.NewAccountServiceClient(accountConn),
@@ -30,6 +34,8 @@ func NewGatewayService(accountConn, transactionConn *grpc.ClientConn) *GatewaySe
 	}
 }
 
+// CreateAccountHandler handles HTTP POST requests to create new accounts.
+// It accepts JSON input, converts it to gRPC format, and returns the created account or error.
 func (g *GatewayService) CreateAccountHandler(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		DocumentNumber string  `json:"document_number"`
@@ -63,6 +69,8 @@ func (g *GatewayService) CreateAccountHandler(w http.ResponseWriter, r *http.Req
 	json.NewEncoder(w).Encode(resp.Account)
 }
 
+// GetAccountHandler handles HTTP GET requests to retrieve account details by ID.
+// It extracts the account ID from the URL path and returns the account information or error.
 func (g *GatewayService) GetAccountHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	accountID := vars["id"]
@@ -83,6 +91,8 @@ func (g *GatewayService) GetAccountHandler(w http.ResponseWriter, r *http.Reques
 	json.NewEncoder(w).Encode(resp.Account)
 }
 
+// GetBalanceHandler handles HTTP GET requests to retrieve account balance by ID.
+// It extracts the account ID from the URL path and returns the current balance or error.
 func (g *GatewayService) GetBalanceHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	accountID := vars["id"]
@@ -103,6 +113,8 @@ func (g *GatewayService) GetBalanceHandler(w http.ResponseWriter, r *http.Reques
 	json.NewEncoder(w).Encode(map[string]float64{"balance": resp.Balance})
 }
 
+// CreateTransactionHandler handles HTTP POST requests to create new transactions.
+// It accepts JSON input, converts it to gRPC format, and returns the created transaction or error.
 func (g *GatewayService) CreateTransactionHandler(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		AccountID     string  `json:"account_id"`
@@ -138,6 +150,8 @@ func (g *GatewayService) CreateTransactionHandler(w http.ResponseWriter, r *http
 	json.NewEncoder(w).Encode(resp.Transaction)
 }
 
+// GetTransactionHandler handles HTTP GET requests to retrieve transaction details by ID.
+// It extracts the transaction ID from the URL path and returns the transaction information or error.
 func (g *GatewayService) GetTransactionHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	transactionID := vars["id"]
@@ -158,6 +172,8 @@ func (g *GatewayService) GetTransactionHandler(w http.ResponseWriter, r *http.Re
 	json.NewEncoder(w).Encode(resp.Transaction)
 }
 
+// GetTransactionHistoryHandler handles HTTP GET requests to retrieve transaction history for an account.
+// It supports pagination with limit and offset query parameters and returns the transaction list with total count.
 func (g *GatewayService) GetTransactionHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	accountID := vars["account_id"]
@@ -204,6 +220,8 @@ func (g *GatewayService) GetTransactionHistoryHandler(w http.ResponseWriter, r *
 	})
 }
 
+// ProcessPaymentHandler handles HTTP POST requests to process payment transactions.
+// It accepts JSON input for payment details and returns the processed transaction or error.
 func (g *GatewayService) ProcessPaymentHandler(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		AccountID   string  `json:"account_id"`
@@ -237,6 +255,8 @@ func (g *GatewayService) ProcessPaymentHandler(w http.ResponseWriter, r *http.Re
 	json.NewEncoder(w).Encode(resp.Transaction)
 }
 
+// HealthHandler handles HTTP GET requests for health checks.
+// It returns the current service status and timestamp in JSON format.
 func (g *GatewayService) HealthHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{
@@ -245,6 +265,9 @@ func (g *GatewayService) HealthHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// main starts the Gateway HTTP service.
+// It establishes connections to account and transaction gRPC services, sets up HTTP routes,
+// configures CORS, and starts the HTTP server on port 8080 (or PORT environment variable).
 func main() {
 	accountAddr := os.Getenv("ACCOUNT_SERVICE_ADDR")
 	if accountAddr == "" {

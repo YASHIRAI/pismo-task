@@ -10,6 +10,8 @@ import (
 	_ "github.com/lib/pq"
 )
 
+// DatabaseConfig holds configuration parameters for database connection.
+// It includes connection details like host, port, credentials, and SSL settings.
 type DatabaseConfig struct {
 	Host     string
 	Port     string
@@ -19,11 +21,16 @@ type DatabaseConfig struct {
 	SSLMode  string
 }
 
+// DatabaseManager manages database connections and operations.
+// It provides methods for connection management, health checks, and schema initialization.
 type DatabaseManager struct {
 	db     *sql.DB
 	config DatabaseConfig
 }
 
+// NewDatabaseManager creates a new database manager instance.
+// It reads configuration from environment variables and establishes a connection to PostgreSQL.
+// Returns the manager instance or an error if connection fails.
 func NewDatabaseManager() (*DatabaseManager, error) {
 	config := DatabaseConfig{
 		Host:     getEnv("DB_HOST", "localhost"),
@@ -56,10 +63,14 @@ func NewDatabaseManager() (*DatabaseManager, error) {
 	}, nil
 }
 
+// GetDB returns the underlying database connection.
+// This method provides access to the sql.DB instance for direct database operations.
 func (dm *DatabaseManager) GetDB() *sql.DB {
 	return dm.db
 }
 
+// Close closes the database connection.
+// It safely closes the underlying sql.DB connection and returns any error that occurs.
 func (dm *DatabaseManager) Close() error {
 	if dm.db != nil {
 		return dm.db.Close()
@@ -67,10 +78,15 @@ func (dm *DatabaseManager) Close() error {
 	return nil
 }
 
+// Health performs a health check on the database connection.
+// It pings the database to verify connectivity and returns an error if the connection is unhealthy.
 func (dm *DatabaseManager) Health() error {
 	return dm.db.Ping()
 }
 
+// InitSchema initializes the database schema by creating tables and indexes.
+// It creates the accounts and transactions tables with appropriate constraints and indexes.
+// Returns an error if schema initialization fails.
 func (dm *DatabaseManager) InitSchema() error {
 	_, err := dm.db.Exec(`
 		CREATE TABLE IF NOT EXISTS accounts (
@@ -122,6 +138,8 @@ func (dm *DatabaseManager) InitSchema() error {
 	return nil
 }
 
+// getEnv retrieves an environment variable value or returns a default value.
+// It checks if the environment variable exists and returns its value, otherwise returns the default.
 func getEnv(key, defaultValue string) string {
 	if value := os.Getenv(key); value != "" {
 		return value

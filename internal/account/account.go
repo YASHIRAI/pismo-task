@@ -10,15 +10,22 @@ import (
 	"github.com/google/uuid"
 )
 
+// Service implements the AccountService gRPC server.
+// It handles account-related operations including creation, retrieval, updates, and balance management.
 type Service struct {
 	pb.UnimplementedAccountServiceServer
 	db *sql.DB
 }
 
+// NewService creates a new instance of the Account service.
+// It takes a database connection and returns a configured Service instance.
 func NewService(db *sql.DB) *Service {
 	return &Service{db: db}
 }
 
+// CreateAccount creates a new account with the provided document number and account type.
+// It validates required fields and generates a unique UUID for the account.
+// Returns the created account or an error message if creation fails.
 func (s *Service) CreateAccount(ctx context.Context, req *pb.CreateAccountRequest) (*pb.CreateAccountResponse, error) {
 	if req.DocumentNumber == "" || req.AccountType == "" {
 		return &pb.CreateAccountResponse{Error: "missing required fields"}, nil
@@ -41,6 +48,8 @@ func (s *Service) CreateAccount(ctx context.Context, req *pb.CreateAccountReques
 	return &pb.CreateAccountResponse{Account: pbAccount}, nil
 }
 
+// GetAccount retrieves an account by its ID.
+// Returns the account details or an error if the account is not found.
 func (s *Service) GetAccount(ctx context.Context, req *pb.GetAccountRequest) (*pb.GetAccountResponse, error) {
 	if req.Id == "" {
 		return &pb.GetAccountResponse{Error: "id required"}, nil
@@ -64,6 +73,9 @@ func (s *Service) GetAccount(ctx context.Context, req *pb.GetAccountRequest) (*p
 	return &pb.GetAccountResponse{Account: pbAccount}, nil
 }
 
+// UpdateAccount updates an existing account's document number and/or account type.
+// Only non-empty fields are updated, preserving existing values for empty fields.
+// Returns the updated account or an error if the update fails.
 func (s *Service) UpdateAccount(ctx context.Context, req *pb.UpdateAccountRequest) (*pb.UpdateAccountResponse, error) {
 	if req.Id == "" {
 		return &pb.UpdateAccountResponse{Error: "id required"}, nil
@@ -90,6 +102,8 @@ func (s *Service) UpdateAccount(ctx context.Context, req *pb.UpdateAccountReques
 	return &pb.UpdateAccountResponse{Account: resp.Account}, nil
 }
 
+// DeleteAccount removes an account from the database by its ID.
+// Returns success status or an error if the account is not found or deletion fails.
 func (s *Service) DeleteAccount(ctx context.Context, req *pb.DeleteAccountRequest) (*pb.DeleteAccountResponse, error) {
 	if req.Id == "" {
 		return &pb.DeleteAccountResponse{Error: "id required"}, nil
@@ -113,6 +127,8 @@ func (s *Service) DeleteAccount(ctx context.Context, req *pb.DeleteAccountReques
 	return &pb.DeleteAccountResponse{Success: true}, nil
 }
 
+// GetBalance retrieves the current balance of an account by its ID.
+// Returns the balance amount or an error if the account is not found.
 func (s *Service) GetBalance(ctx context.Context, req *pb.GetBalanceRequest) (*pb.GetBalanceResponse, error) {
 	if req.AccountId == "" {
 		return &pb.GetBalanceResponse{Error: "account_id required"}, nil

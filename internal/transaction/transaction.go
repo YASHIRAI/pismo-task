@@ -10,24 +10,28 @@ import (
 	"github.com/google/uuid"
 )
 
-// Service handles transaction operations
+// Service implements the TransactionService gRPC server.
+// It handles all transaction-related operations including creation, retrieval, and payment processing.
 type Service struct {
 	pb.UnimplementedTransactionServiceServer
 	db *sql.DB
 }
 
-// NewService creates a new transaction service
+// NewService creates a new instance of the Transaction service.
+// It takes a database connection and returns a configured Service instance.
 func NewService(db *sql.DB) *Service {
 	return &Service{db: db}
 }
 
-// CreateTransaction creates a new transaction
+// CreateTransaction creates a new transaction and processes it based on the operation type.
+// It validates the operation type, checks account existence, and updates account balance.
+// For PAYMENT operations, it adds to the balance; for other operations, it debits the balance.
+// Returns the created transaction or an error if processing fails.
 func (s *Service) CreateTransaction(ctx context.Context, req *pb.CreateTransactionRequest) (*pb.CreateTransactionResponse, error) {
 	if req.AccountId == "" || req.OperationType == "" {
 		return &pb.CreateTransactionResponse{Error: "missing required fields"}, nil
 	}
 
-	// Validate operation type
 	validOperations := map[string]bool{
 		"CASH_PURCHASE":        true,
 		"INSTALLMENT_PURCHASE": true,
@@ -38,7 +42,6 @@ func (s *Service) CreateTransaction(ctx context.Context, req *pb.CreateTransacti
 		return &pb.CreateTransactionResponse{Error: "invalid operation type"}, nil
 	}
 
-	// Check if account exists
 	var account common.Account
 	err := s.db.QueryRowContext(ctx, `
 		SELECT id, document_number, account_type, balance, created_at, updated_at
@@ -53,19 +56,15 @@ func (s *Service) CreateTransaction(ctx context.Context, req *pb.CreateTransacti
 		return &pb.CreateTransactionResponse{Error: "database error"}, nil
 	}
 
-	// Create transaction
 	dbTransaction := ConvertCreateTransactionRequestToTransaction(req)
 	dbTransaction.ID = uuid.New().String()
 	status := "PENDING"
 
-	// Process transaction based on operation type
 	if req.OperationType == "PAYMENT" {
-		// Payment should be positive amount
 		if req.Amount <= 0 {
 			return &pb.CreateTransactionResponse{Error: "payment amount must be positive"}, nil
 		}
 
-		// Update account balance
 		_, err = s.db.ExecContext(ctx, `
 			UPDATE accounts 
 			SET balance = balance + $1, updated_at = $2 
@@ -77,18 +76,15 @@ func (s *Service) CreateTransaction(ctx context.Context, req *pb.CreateTransacti
 		}
 		status = "COMPLETED"
 	} else {
-		// For debit operations, check if account has sufficient balance
 		amount := req.Amount
 		if amount >= 0 {
 			amount = -amount
 		}
 
-		// Check if account has sufficient balance
 		if account.Balance+amount < 0 {
 			return &pb.CreateTransactionResponse{Error: "insufficient balance"}, nil
 		}
 
-		// Update account balance
 		_, err = s.db.ExecContext(ctx, `
 			UPDATE accounts 
 			SET balance = balance + $1, updated_at = $2 
@@ -99,10 +95,9 @@ func (s *Service) CreateTransaction(ctx context.Context, req *pb.CreateTransacti
 			return &pb.CreateTransactionResponse{Error: "could not process transaction"}, nil
 		}
 		status = "COMPLETED"
-		dbTransaction.Amount = amount // Update the amount to reflect the negative value
+		dbTransaction.Amount = amount
 	}
 
-	// Insert transaction record
 	dbTransaction.Status = status
 	_, err = s.db.ExecContext(ctx, `
 		INSERT INTO transactions (id, account_id, operation_type, amount, description, created_at, status)
@@ -114,12 +109,12 @@ func (s *Service) CreateTransaction(ctx context.Context, req *pb.CreateTransacti
 		return &pb.CreateTransactionResponse{Error: "could not create transaction"}, nil
 	}
 
-	// Convert back to protobuf
 	pbTransaction := ConvertTransactionToProto(dbTransaction)
 	return &pb.CreateTransactionResponse{Transaction: pbTransaction}, nil
 }
 
-// GetTransaction retrieves a transaction by ID
+// GetTransaction retrieves a transaction by its ID.
+// Returns the transaction details or an error if the transaction is not found.
 func (s *Service) GetTransaction(ctx context.Context, req *pb.GetTransactionRequest) (*pb.GetTransactionResponse, error) {
 	if req.Id == "" {
 		return &pb.GetTransactionResponse{Error: "id required"}, nil
@@ -143,7 +138,9 @@ func (s *Service) GetTransaction(ctx context.Context, req *pb.GetTransactionRequ
 	return &pb.GetTransactionResponse{Transaction: pbTransaction}, nil
 }
 
-// GetTransactionHistory retrieves transaction history for an account
+// GetTransactionHistory retrieves paginated transaction history for an account.
+// It supports limit and offset parameters for pagination and returns the total count.
+// Transactions are ordered by creation time in descending order.
 func (s *Service) GetTransactionHistory(ctx context.Context, req *pb.GetTransactionHistoryRequest) (*pb.GetTransactionHistoryResponse, error) {
 	if req.AccountId == "" {
 		return &pb.GetTransactionHistoryResponse{Error: "account_id required"}, nil
@@ -151,14 +148,13 @@ func (s *Service) GetTransactionHistory(ctx context.Context, req *pb.GetTransact
 
 	limit := req.Limit
 	if limit <= 0 || limit > 100 {
-		limit = 50 // default limit
+		limit = 50
 	}
 	offset := req.Offset
 	if offset < 0 {
 		offset = 0
 	}
 
-	// Get total count
 	var total int32
 	err := s.db.QueryRowContext(ctx, `
 		SELECT COUNT(*) FROM transactions WHERE account_id = $1
@@ -168,7 +164,6 @@ func (s *Service) GetTransactionHistory(ctx context.Context, req *pb.GetTransact
 		return &pb.GetTransactionHistoryResponse{Error: "database error"}, nil
 	}
 
-	// Get transactions with pagination
 	rows, err := s.db.QueryContext(ctx, `
 		SELECT id, account_id, operation_type, amount, description, created_at, status
 		FROM transactions 
@@ -198,9 +193,10 @@ func (s *Service) GetTransactionHistory(ctx context.Context, req *pb.GetTransact
 	}, nil
 }
 
-// ProcessPayment processes a payment transaction
+// ProcessPayment processes a payment transaction by creating a PAYMENT operation.
+// This is a convenience method that delegates to CreateTransaction with PAYMENT operation type.
+// Returns the processed transaction or an error if processing fails.
 func (s *Service) ProcessPayment(ctx context.Context, req *pb.ProcessPaymentRequest) (*pb.ProcessPaymentResponse, error) {
-	// ProcessPayment is essentially the same as CreateTransaction with PAYMENT operation type
 	createReq := &pb.CreateTransactionRequest{
 		AccountId:     req.AccountId,
 		OperationType: "PAYMENT",
