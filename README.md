@@ -62,9 +62,6 @@ The application includes a modern web-based UI built with Streamlit that provide
 ![Health Monitoring](docs/screenshots/08-health-monitoring.png)
 *Real-time health status of all services and database connectivity with detailed system information*
 
-### Additional Features
-![Additional Features](docs/screenshots/09-additional-feature.png)
-*Additional system features and configuration options*
 
 ### Screenshot Gallery
 
@@ -80,7 +77,6 @@ The following screenshots demonstrate the complete functionality of the Pismo Fi
 | **Transaction History** | ![Transaction History](docs/screenshots/06-transaction-history.png) | Browse transaction history |
 | **Account Balance** | ![Account Balance](docs/screenshots/07-account-balance.png) | Check account balances |
 | **Health Monitoring** | ![Health Monitoring](docs/screenshots/08-health-monitoring.png) | Monitor system health |
-| **Additional Features** | ![Additional Features](docs/screenshots/09-additional-feature.png) | Additional system features |
 
 ### Interface Features
 
