@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/YASHIRAI/pismo-task/internal/common"
 	pb "github.com/YASHIRAI/pismo-task/proto/transaction"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,7 +17,8 @@ func TestNewService(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	service := NewService(db)
+	logger, _ := common.NewLogger("test-service", common.INFO)
+	service := NewService(db, logger)
 	assert.NotNil(t, service)
 	assert.Equal(t, db, service.db)
 }
@@ -223,7 +225,8 @@ func TestService_CreateTransaction(t *testing.T) {
 
 			tt.mockSetup(mock)
 
-			service := NewService(db)
+			logger, _ := common.NewLogger("test-service", common.INFO)
+			service := NewService(db, logger)
 			response, err := service.CreateTransaction(context.Background(), tt.request)
 
 			assert.NoError(t, err)
@@ -326,7 +329,8 @@ func TestService_GetTransaction(t *testing.T) {
 
 			tt.mockSetup(mock)
 
-			service := NewService(db)
+			logger, _ := common.NewLogger("test-service", common.INFO)
+			service := NewService(db, logger)
 			response, err := service.GetTransaction(context.Background(), tt.request)
 
 			assert.NoError(t, err)
@@ -468,7 +472,8 @@ func TestService_GetTransactionHistory(t *testing.T) {
 
 			tt.mockSetup(mock)
 
-			service := NewService(db)
+			logger, _ := common.NewLogger("test-service", common.INFO)
+			service := NewService(db, logger)
 			response, err := service.GetTransactionHistory(context.Background(), tt.request)
 
 			assert.NoError(t, err)
@@ -565,7 +570,8 @@ func TestService_ProcessPayment(t *testing.T) {
 
 			tt.mockSetup(mock)
 
-			service := NewService(db)
+			logger, _ := common.NewLogger("test-service", common.INFO)
+			service := NewService(db, logger)
 			response, err := service.ProcessPayment(context.Background(), tt.request)
 
 			assert.NoError(t, err)

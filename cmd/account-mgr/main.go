@@ -3,7 +3,7 @@
 package main
 
 import (
-	"log"
+	"fmt"
 	"net"
 	"os"
 
@@ -18,17 +18,32 @@ import (
 // It initializes the database connection, sets up the schema, and starts the gRPC server on port 8081.
 // The service handles account-related operations including CRUD operations and balance management.
 func main() {
+	// Initialize logging
+	logLevel := common.ParseLogLevel(os.Getenv("LOG_LEVEL"))
+	logger, err := common.NewLogger("account-mgr", logLevel)
+	if err != nil {
+		fmt.Printf("Failed to initialize logger: %v\n", err)
+		os.Exit(1)
+	}
+	defer logger.Close()
+
+	logger.Info("Starting Account Manager service")
+
 	dbManager, err := common.NewDatabaseManager()
 	if err != nil {
-		log.Fatalf("Failed to initialize database: %v", err)
+		logger.Fatal("Failed to initialize database: %v", err)
 	}
 	defer dbManager.Close()
 
+	logger.Info("Database connection established")
+
 	if err := dbManager.InitSchema(); err != nil {
-		log.Fatalf("Failed to initialize database schema: %v", err)
+		logger.Fatal("Failed to initialize database schema: %v", err)
 	}
 
-	accountService := account.NewService(dbManager.GetDB())
+	logger.Info("Database schema initialized")
+
+	accountService := account.NewService(dbManager.GetDB(), logger)
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -37,14 +52,14 @@ func main() {
 
 	lis, err := net.Listen("tcp", ":"+port)
 	if err != nil {
-		log.Fatalf("Failed to listen: %v", err)
+		logger.Fatal("Failed to listen: %v", err)
 	}
 
 	grpcServer := grpc.NewServer()
 	pb.RegisterAccountServiceServer(grpcServer, accountService)
 
-	log.Printf("Account service listening on port %s", port)
+	logger.Info("Account service listening on port %s", port)
 	if err := grpcServer.Serve(lis); err != nil {
-		log.Fatalf("Failed to serve: %v", err)
+		logger.Fatal("Failed to serve: %v", err)
 	}
 }

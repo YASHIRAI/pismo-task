@@ -19,8 +19,12 @@ FROM alpine:latest
 RUN apk --no-cache add ca-certificates
 WORKDIR /root/
 
+RUN mkdir -p logs
+
 COPY --from=builder /app/account-mgr .
 
 EXPOSE 8081
+
+ENV LOG_LEVEL=INFO
 
 CMD ["./account-mgr"]

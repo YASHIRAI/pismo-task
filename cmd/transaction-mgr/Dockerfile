@@ -19,8 +19,14 @@ FROM alpine:latest
 RUN apk --no-cache add ca-certificates
 WORKDIR /root/
 
+# Create logs directory
+RUN mkdir -p logs
+
 COPY --from=builder /app/transaction-mgr .
 
 EXPOSE 8082
+
+# Set default log level
+ENV LOG_LEVEL=INFO
 
 CMD ["./transaction-mgr"]

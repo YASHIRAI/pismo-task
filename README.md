@@ -715,6 +715,184 @@ export TRANSACTION_SERVICE_ADDR=localhost:8082
 export PORT=8083
 ```
 
+## Logging
+
+The Pismo Financial Services platform includes comprehensive logging capabilities for debugging, monitoring, and troubleshooting. All services implement structured logging with configurable levels and file output.
+
+### Logging Features
+
+- **Structured Logging**: Consistent log format across all services
+- **Multiple Log Levels**: DEBUG, INFO, WARN, ERROR, FATAL
+- **File Output**: Logs are written to timestamped files in the `logs/` directory
+- **Console Output**: Logs are also displayed on stdout for development
+- **Request Logging**: HTTP requests are logged with timing and status codes
+- **Database Logging**: Database operations are logged with execution times
+- **gRPC Logging**: Inter-service communication is logged with timing
+- **Business Logic Logging**: Key business operations are logged with context
+
+### Log Configuration
+
+#### Environment Variables
+
+- `LOG_LEVEL`: Set the logging level (DEBUG, INFO, WARN, ERROR, FATAL)
+  - Default: `INFO`
+  - Example: `LOG_LEVEL=DEBUG`
+
+#### Log Files
+
+Log files are created in the `logs/` directory with the following naming pattern:
+```
+logs/{service-name}_{timestamp}.log
+```
+
+Examples:
+- `logs/gateway_2025-09-23_15-30-45.log`
+- `logs/account-mgr_2025-09-23_15-30-45.log`
+- `logs/transaction-mgr_2025-09-23_15-30-45.log`
+
+### Log Format
+
+Each log entry includes:
+- **Timestamp**: When the log entry was created
+- **Service Name**: Which service generated the log
+- **Log Level**: DEBUG, INFO, WARN, ERROR, or FATAL
+- **File Location**: Source file and line number
+- **Message**: The actual log message
+
+Example log entry:
+```
+2025-09-23 15:30:45 [gateway][INFO] gateway/main.go:332 Starting Gateway service
+```
+
+### Log Levels
+
+#### DEBUG
+- Detailed information for debugging
+- Database query details
+- gRPC call details
+- Internal service state
+
+#### INFO
+- General information about service operations
+- Service startup/shutdown
+- Successful operations
+- Business logic events
+
+#### WARN
+- Warning conditions
+- Non-critical errors
+- Deprecated functionality usage
+
+#### ERROR
+- Error conditions
+- Failed operations
+- Service errors
+
+#### FATAL
+- Critical errors that cause service termination
+- Database connection failures
+- Service startup failures
+
+### Logging Examples
+
+#### HTTP Request Logging
+```
+[gateway][INFO] HTTP POST /accounts from 127.0.0.1 - Status: 201 - Duration: 45ms
+```
+
+#### Database Operation Logging
+```
+[account-mgr][DEBUG] DB INSERT on accounts completed in 12ms
+[account-mgr][ERROR] DB SELECT on accounts failed after 5s: connection timeout
+```
+
+#### gRPC Communication Logging
+```
+[gateway][DEBUG] gRPC CreateAccount completed in 25ms
+[gateway][ERROR] gRPC CreateTransaction failed after 2s: service unavailable
+```
+
+#### Business Logic Logging
+```
+[transaction-mgr][INFO] Business operation CreateTransaction completed successfully - Details: map[account_id:123 amount:100.50 operation_type:PAYMENT]
+```
+
+### Log Management
+
+#### Development
+- Logs are written to both console and files
+- Use `LOG_LEVEL=DEBUG` for detailed debugging information
+- Log files are automatically created in the `logs/` directory
+
+#### Production
+- Set `LOG_LEVEL=INFO` or `LOG_LEVEL=WARN` to reduce log volume
+- Implement log rotation to manage disk space
+- Consider centralized logging solutions (ELK stack, Fluentd, etc.)
+
+#### Log Rotation
+For production environments, implement log rotation:
+
+
+### Troubleshooting with Logs
+
+#### Common Issues
+
+1. **Service Connection Failures**
+   ```
+   [gateway][ERROR] Failed to connect to account service: connection refused
+   ```
+   - Check if account service is running
+   - Verify network connectivity
+   - Check service addresses
+
+2. **Database Connection Issues**
+   ```
+   [account-mgr][FATAL] Failed to initialize database: connection refused
+   ```
+   - Verify PostgreSQL is running
+   - Check database connection parameters
+   - Verify database credentials
+
+3. **Transaction Failures**
+   ```
+   [transaction-mgr][ERROR] Transaction creation failed: insufficient balance
+   ```
+   - Check account balance
+   - Verify transaction amount
+   - Review business logic
+
+4. **Performance Issues**
+   ```
+   [account-mgr][WARN] DB SELECT on accounts took 2.5s
+   ```
+   - Check database performance
+   - Review query optimization
+   - Consider indexing
+
+### Log Analysis Tools
+
+#### Command Line Tools
+```bash
+# View recent logs
+tail -f logs/gateway_*.log
+
+# Search for errors
+grep "ERROR" logs/*.log
+
+# Count log levels
+grep -c "INFO\|WARN\|ERROR" logs/*.log
+
+# Monitor multiple services
+tail -f logs/*.log
+```
+
+#### Log Aggregation
+For production environments, consider:
+- **ELK Stack**: Elasticsearch, Logstash, Kibana
+- **Fluentd**: Log collection and forwarding
+- **Prometheus + Grafana**: Metrics and visualization
+- **Jaeger**: Distributed tracing
+
 ## Testing
 
 ### Unit Tests

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -14,6 +13,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/YASHIRAI/pismo-task/internal/common"
 	pbAccount "github.com/YASHIRAI/pismo-task/proto/account"
 	pbTransaction "github.com/YASHIRAI/pismo-task/proto/transaction"
 )
@@ -23,20 +23,59 @@ import (
 type GatewayService struct {
 	accountClient     pbAccount.AccountServiceClient
 	transactionClient pbTransaction.TransactionServiceClient
+	logger            *common.Logger
+}
+
+// LoggingMiddleware provides HTTP request logging functionality
+func LoggingMiddleware(logger *common.Logger) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			start := time.Now()
+
+			// Create a response writer wrapper to capture status code
+			wrapped := &responseWriter{ResponseWriter: w, statusCode: http.StatusOK}
+
+			// Process the request
+			next.ServeHTTP(wrapped, r)
+
+			// Log the request
+			duration := time.Since(start)
+			clientIP := r.RemoteAddr
+			if forwarded := r.Header.Get("X-Forwarded-For"); forwarded != "" {
+				clientIP = forwarded
+			}
+
+			logger.LogRequest(r.Method, r.URL.Path, clientIP, wrapped.statusCode, duration)
+		})
+	}
+}
+
+// responseWriter wraps http.ResponseWriter to capture status code
+type responseWriter struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+func (rw *responseWriter) WriteHeader(code int) {
+	rw.statusCode = code
+	rw.ResponseWriter.WriteHeader(code)
 }
 
 // NewGatewayService creates a new gateway service instance.
 // It takes gRPC client connections for account and transaction services and returns a configured GatewayService.
-func NewGatewayService(accountConn, transactionConn *grpc.ClientConn) *GatewayService {
+func NewGatewayService(accountConn, transactionConn *grpc.ClientConn, logger *common.Logger) *GatewayService {
 	return &GatewayService{
 		accountClient:     pbAccount.NewAccountServiceClient(accountConn),
 		transactionClient: pbTransaction.NewTransactionServiceClient(transactionConn),
+		logger:            logger,
 	}
 }
 
 // CreateAccountHandler handles HTTP POST requests to create new accounts.
 // It accepts JSON input, converts it to gRPC format, and returns the created account or error.
 func (g *GatewayService) CreateAccountHandler(w http.ResponseWriter, r *http.Request) {
+	g.logger.Info("Creating new account")
+
 	var req struct {
 		DocumentNumber string  `json:"document_number"`
 		AccountType    string  `json:"account_type"`
@@ -44,9 +83,13 @@ func (g *GatewayService) CreateAccountHandler(w http.ResponseWriter, r *http.Req
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		g.logger.Error("Failed to decode JSON request: %v", err)
 		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
+
+	g.logger.Debug("Account creation request: DocumentNumber=%s, AccountType=%s, InitialBalance=%f",
+		req.DocumentNumber, req.AccountType, req.InitialBalance)
 
 	grpcReq := &pbAccount.CreateAccountRequest{
 		DocumentNumber: req.DocumentNumber,
@@ -54,17 +97,25 @@ func (g *GatewayService) CreateAccountHandler(w http.ResponseWriter, r *http.Req
 		InitialBalance: req.InitialBalance,
 	}
 
+	start := time.Now()
 	resp, err := g.accountClient.CreateAccount(context.Background(), grpcReq)
+	duration := time.Since(start)
+
+	g.logger.LogGRPC("CreateAccount", duration, err)
+
 	if err != nil {
+		g.logger.Error("Account service error: %v", err)
 		http.Error(w, fmt.Sprintf("Account service error: %v", err), http.StatusInternalServerError)
 		return
 	}
 
 	if resp.Error != "" {
+		g.logger.Error("Account creation failed: %s", resp.Error)
 		http.Error(w, resp.Error, http.StatusBadRequest)
 		return
 	}
 
+	g.logger.Info("Account created successfully: ID=%s", resp.Account.Id)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp.Account)
 }
@@ -269,6 +320,16 @@ func (g *GatewayService) HealthHandler(w http.ResponseWriter, r *http.Request) {
 // It establishes connections to account and transaction gRPC services, sets up HTTP routes,
 // configures CORS, and starts the HTTP server on port 8080 (or PORT environment variable).
 func main() {
+	logLevel := common.ParseLogLevel(os.Getenv("LOG_LEVEL"))
+	logger, err := common.NewLogger("gateway", logLevel)
+	if err != nil {
+		fmt.Printf("Failed to initialize logger: %v\n", err)
+		os.Exit(1)
+	}
+	defer logger.Close()
+
+	logger.Info("Starting Gateway service")
+
 	accountAddr := os.Getenv("ACCOUNT_SERVICE_ADDR")
 	if accountAddr == "" {
 		accountAddr = "localhost:8081"
@@ -279,21 +340,28 @@ func main() {
 		transactionAddr = "localhost:8082"
 	}
 
+	logger.Info("Connecting to services: Account=%s, Transaction=%s", accountAddr, transactionAddr)
+
 	accountConn, err := grpc.Dial(accountAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("Failed to connect to account service: %v", err)
+		logger.Fatal("Failed to connect to account service: %v", err)
 	}
 	defer accountConn.Close()
 
 	transactionConn, err := grpc.Dial(transactionAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("Failed to connect to transaction service: %v", err)
+		logger.Fatal("Failed to connect to transaction service: %v", err)
 	}
 	defer transactionConn.Close()
 
-	gateway := NewGatewayService(accountConn, transactionConn)
+	logger.Info("Successfully connected to all services")
+
+	gateway := NewGatewayService(accountConn, transactionConn, logger)
 
 	r := mux.NewRouter()
+
+	// Add logging middleware
+	r.Use(LoggingMiddleware(logger))
 
 	r.HandleFunc("/health", gateway.HealthHandler).Methods("GET")
 
@@ -323,14 +391,14 @@ func main() {
 
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8080"
+		port = "8083"
 	}
 
-	log.Printf("Gateway service listening on port %s", port)
-	log.Printf("Account service: %s", accountAddr)
-	log.Printf("Transaction service: %s", transactionAddr)
+	logger.Info("Gateway service listening on port %s", port)
+	logger.Info("Account service: %s", accountAddr)
+	logger.Info("Transaction service: %s", transactionAddr)
 
 	if err := http.ListenAndServe(":"+port, corsHandler(r)); err != nil {
-		log.Fatal(err)
+		logger.Fatal("HTTP server error: %v", err)
 	}
 }

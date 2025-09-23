@@ -1,0 +1,27 @@
+[test-service][INFO] 2025/09/24 00:04:42 logger.go:83: Creating account: DocumentNumber=12345678901, AccountType=CHECKING, InitialBalance=100.500000
+[test-service][INFO] 2025/09/24 00:04:42 logger.go:83: Account created successfully: ID=6641af96-7e76-4ab7-967f-b8670646ba98
+[test-service][INFO] 2025/09/24 00:04:42 logger.go:83: Creating account: DocumentNumber=, AccountType=CHECKING, InitialBalance=100.500000
+[test-service][ERROR] 2025/09/24 00:04:42 logger.go:97: Account creation failed: missing required fields
+[test-service][INFO] 2025/09/24 00:04:42 logger.go:83: Creating account: DocumentNumber=12345678901, AccountType=, InitialBalance=100.500000
+[test-service][ERROR] 2025/09/24 00:04:42 logger.go:97: Account creation failed: missing required fields
+[test-service][INFO] 2025/09/24 00:04:42 logger.go:83: Creating account: DocumentNumber=12345678901, AccountType=CHECKING, InitialBalance=100.500000
+[test-service][ERROR] 2025/09/24 00:04:42 logger.go:97: DB INSERT on accounts failed after 20.833µs: sql: connection is already closed
+[test-service][ERROR] 2025/09/24 00:04:42 logger.go:97: Account creation failed: sql: connection is already closed
+[test-service][ERROR] 2025/09/24 00:04:42 logger.go:97: Get account failed: ID required
+[test-service][ERROR] 2025/09/24 00:04:42 logger.go:97: DB SELECT on accounts failed after 24.5µs: sql: no rows in result set
+[test-service][WARN] 2025/09/24 00:04:42 logger.go:90: Account not found: ID=non-existent-id
+[test-service][ERROR] 2025/09/24 00:04:42 logger.go:97: DB SELECT on accounts failed after 25.375µs: sql: connection is already closed
+[test-service][ERROR] 2025/09/24 00:04:42 logger.go:97: Account lookup failed: sql: connection is already closed
+[test-service][INFO] 2025/09/24 00:04:42 logger.go:83: Updating account: ID=test-account-id
+[test-service][INFO] 2025/09/24 00:04:42 logger.go:83: Account updated successfully: ID=test-account-id
+[test-service][INFO] 2025/09/24 00:04:42 logger.go:83: Updating account: ID=
+[test-service][ERROR] 2025/09/24 00:04:42 logger.go:97: Update account failed: ID required
+[test-service][INFO] 2025/09/24 00:04:42 logger.go:83: Updating account: ID=test-account-id
+[test-service][ERROR] 2025/09/24 00:04:42 logger.go:97: DB UPDATE on accounts failed after 11.917µs: sql: connection is already closed
+[test-service][ERROR] 2025/09/24 00:04:42 logger.go:97: Account update failed: sql: connection is already closed
+[test-service][ERROR] 2025/09/24 00:04:42 logger.go:97: DB DELETE on accounts failed after 14.375µs: sql: connection is already closed
+[test-service][ERROR] 2025/09/24 00:04:42 logger.go:97: Account deletion failed: sql: connection is already closed
+[test-service][ERROR] 2025/09/24 00:04:42 logger.go:97: DB SELECT on accounts failed after 12.375µs: sql: no rows in result set
+[test-service][WARN] 2025/09/24 00:04:42 logger.go:90: Account not found for balance lookup: ID=non-existent-id
+[test-service][ERROR] 2025/09/24 00:04:42 logger.go:97: DB SELECT on accounts failed after 12.083µs: sql: connection is already closed
+[test-service][ERROR] 2025/09/24 00:04:42 logger.go:97: Balance lookup failed: sql: connection is already closed

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/YASHIRAI/pismo-task/internal/common"
 	pb "github.com/YASHIRAI/pismo-task/proto/account"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,7 +17,8 @@ func TestNewService(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	service := NewService(db)
+	logger, _ := common.NewLogger("test-service", common.INFO)
+	service := NewService(db, logger)
 	assert.NotNil(t, service)
 	assert.Equal(t, db, service.db)
 }
@@ -107,7 +109,8 @@ func TestService_CreateAccount(t *testing.T) {
 
 			tt.mockSetup(mock)
 
-			service := NewService(db)
+			logger, _ := common.NewLogger("test-service", common.INFO)
+			service := NewService(db, logger)
 			response, err := service.CreateAccount(context.Background(), tt.request)
 
 			assert.NoError(t, err)
@@ -209,7 +212,8 @@ func TestService_GetAccount(t *testing.T) {
 
 			tt.mockSetup(mock)
 
-			service := NewService(db)
+			logger, _ := common.NewLogger("test-service", common.INFO)
+			service := NewService(db, logger)
 			response, err := service.GetAccount(context.Background(), tt.request)
 
 			assert.NoError(t, err)
@@ -288,7 +292,8 @@ func TestService_UpdateAccount(t *testing.T) {
 
 			tt.mockSetup(mock)
 
-			service := NewService(db)
+			logger, _ := common.NewLogger("test-service", common.INFO)
+			service := NewService(db, logger)
 			response, err := service.UpdateAccount(context.Background(), tt.request)
 
 			assert.NoError(t, err)
@@ -375,7 +380,8 @@ func TestService_DeleteAccount(t *testing.T) {
 
 			tt.mockSetup(mock)
 
-			service := NewService(db)
+			logger, _ := common.NewLogger("test-service", common.INFO)
+			service := NewService(db, logger)
 			response, err := service.DeleteAccount(context.Background(), tt.request)
 
 			assert.NoError(t, err)
@@ -459,7 +465,8 @@ func TestService_GetBalance(t *testing.T) {
 
 			tt.mockSetup(mock)
 
-			service := NewService(db)
+			logger, _ := common.NewLogger("test-service", common.INFO)
+			service := NewService(db, logger)
 			response, err := service.GetBalance(context.Background(), tt.request)
 
 			assert.NoError(t, err)

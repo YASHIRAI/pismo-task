@@ -3,17 +3,21 @@ module github.com/YASHIRAI/pismo-task/cmd/gateway
 go 1.21
 
 require (
+	github.com/YASHIRAI/pismo-task/internal/common v0.0.0-00010101000000-000000000000
 	github.com/YASHIRAI/pismo-task/proto/account v0.0.0-00010101000000-000000000000
 	github.com/YASHIRAI/pismo-task/proto/transaction v0.0.0-00010101000000-000000000000
 	github.com/gorilla/mux v1.8.1
 	google.golang.org/grpc v1.64.0
 )
 
+replace github.com/YASHIRAI/pismo-task/internal/common => ../../internal/common
+
 replace github.com/YASHIRAI/pismo-task/proto/account => ../../proto/account
 
 replace github.com/YASHIRAI/pismo-task/proto/transaction => ../../proto/transaction
 
 require (
+	github.com/lib/pq v1.10.9 // indirect
 	golang.org/x/net v0.22.0 // indirect
 	golang.org/x/sys v0.23.0 // indirect
 	golang.org/x/text v0.17.0 // indirect

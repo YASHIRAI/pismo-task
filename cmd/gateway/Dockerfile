@@ -16,8 +16,14 @@ FROM alpine:latest
 RUN apk --no-cache add ca-certificates
 WORKDIR /root/
 
+# Create logs directory
+RUN mkdir -p logs
+
 COPY --from=builder /app/gateway .
 
-EXPOSE 8080
+EXPOSE 8083
+
+# Set default log level
+ENV LOG_LEVEL=INFO
 
 CMD ["./gateway"]
