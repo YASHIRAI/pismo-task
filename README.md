@@ -40,9 +40,9 @@ The application includes a modern web-based UI built with Streamlit that provide
 ![Account View](docs/screenshots/03-account-view.png)
 *Account details display showing account information and metadata*
 
-#### Account Balance Check
-![Account Balance](docs/screenshots/07-account-balance.png)
-*Balance checking interface with current balance display*
+#### System Monitoring
+![System Monitoring](docs/screenshots/07-system-monitoring.png)
+*System monitoring interface showing status of all three services (Gateway, Account Manager, Transaction Manager)*
 
 ### Transaction Management
 
@@ -75,7 +75,7 @@ The following screenshots demonstrate the complete functionality of the Pismo Fi
 | **Transaction Creation** | ![Transaction Creation](docs/screenshots/04-transaction-creation.png) | Process financial transactions |
 | **Transaction View** | ![Transaction View](docs/screenshots/05-transaction-view.png) | View transaction details |
 | **Transaction History** | ![Transaction History](docs/screenshots/06-transaction-history.png) | Browse transaction history |
-| **Account Balance** | ![Account Balance](docs/screenshots/07-account-balance.png) | Check account balances |
+| **System Monitoring** | ![System Monitoring](docs/screenshots/07-system-monitoring.png) | Monitor all three services status |
 | **Health Monitoring** | ![Health Monitoring](docs/screenshots/08-health-monitoring.png) | Monitor system health |
 
 ### Interface Features
