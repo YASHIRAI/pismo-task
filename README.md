@@ -22,6 +22,63 @@ A comprehensive microservices-based financial services platform built with Go, f
 
 This project implements a complete financial services platform using a microservices architecture. The system handles account management, transaction processing, and provides both REST and gRPC APIs for client integration. Built with Go and PostgreSQL, it demonstrates best practices in modern software development including clean architecture, comprehensive testing, and containerization.
 
+## User Interface
+
+The application includes a modern web-based UI built with Streamlit that provides an intuitive interface for testing and managing the financial services platform.
+
+### Dashboard Overview
+![System Dashboard](docs/screenshots/dashboard.png)
+*System dashboard showing service status and health monitoring*
+
+### Account Management
+![Account Management](docs/screenshots/account-management.png)
+*Account creation, viewing, and balance checking interface*
+
+### Transaction Management
+![Transaction Management](docs/screenshots/transaction-management.png)
+*Transaction creation, viewing, and history management*
+
+### System Health Monitoring
+![Health Monitoring](docs/screenshots/health-monitoring.png)
+*Real-time health status of all services and database connectivity*
+
+### Screenshot Instructions
+
+To add actual screenshots to this README:
+
+1. **Start the Application**: Run the Streamlit UI at `http://localhost:8501`
+2. **Take Screenshots**: Capture each interface section
+3. **Crop Images**: Focus on relevant UI elements, exclude browser chrome and OS elements
+4. **Save Files**: Save as PNG files in `docs/screenshots/` directory
+
+#### Detailed Cropping Guidelines
+
+**dashboard.png** - System Dashboard
+- **Crop Focus**: Main dashboard panel with service status cards (Gateway, Account Service, Transaction Service) and system health banner
+- **Exclude**: Browser chrome, macOS menu bar, dock
+- **Dimensions**: Focus on main content area (~1200x800px)
+
+**account-management.png** - Account Management
+- **Crop Focus**: Account creation form, account details display, and balance checking interface
+- **Exclude**: Browser chrome, sidebar (keep only relevant parts)
+- **Dimensions**: Focus on account management section (~1000x700px)
+
+**transaction-management.png** - Transaction Management
+- **Crop Focus**: Transaction creation form, transaction history table, and transaction details
+- **Exclude**: Browser chrome, macOS elements
+- **Dimensions**: Focus on transaction management area (~1200x900px)
+
+**health-monitoring.png** - Health Monitoring
+- **Crop Focus**: Health status display, service status indicators, and system information
+- **Exclude**: Browser chrome, macOS elements
+- **Dimensions**: Focus on health monitoring section (~1000x600px)
+
+#### Tools for Cropping
+- **macOS**: Preview app or Screenshot app with built-in cropping
+- **Windows**: Snipping Tool or Paint 3D
+- **Linux**: GIMP, ImageMagick, or built-in screenshot tools
+- **Online**: Canva, Photopea, or similar online editors
+
 ### Key Features
 
 - **Microservices Architecture**: Three independent services with clear separation of concerns
@@ -620,6 +677,14 @@ streamlit run streamlit_app.py
 ```
 
 Access the web interface at: http://localhost:8501
+
+The web interface provides:
+- **Account Management**: Create, view, and check account balances
+- **Transaction Management**: Create transactions, view transaction history, and process payments
+- **System Dashboard**: Monitor service health and system status
+- **Real-time Updates**: Live status monitoring of all services
+
+See the [User Interface](#user-interface) section above for screenshots of the web interface.
 
 ### Environment Variables
 
