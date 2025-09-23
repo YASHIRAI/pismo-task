@@ -49,10 +49,10 @@ The system consists of three microservices that communicate via gRPC:
 │   Clients       │    │   Service       │    │   Manager       │    │   Manager       │
 │                 │    │   (Port 8083)   │    │   (Port 8081)  │    │   (Port 8082)  │
 │  - Web Apps     │    │                 │    │                 │    │                 │
-│  - Mobile Apps  │    │  - REST API     │    │  - Account CRUD │    │  - Transaction  │
-│  - Third-party  │    │  - CORS Support │    │  - Balance Mgmt │    │    Processing   │
-│    Services     │    │  - Routing      │    │  - Validation   │    │  - History      │
-└─────────────────┘    │  - Error Handle │    │  - Health Check │    │  - Status Track │
+│  - Mobile Apps  │    │  - HTTP-to-gRPC │    │  - Account CRUD │    │  - Transaction  │
+│  - Third-party  │    │    Bridge       │    │  - Balance Mgmt │    │    Processing   │
+│    Services     │    │  - REST API     │    │  - Validation   │    │  - History      │
+└─────────────────┘    │  - CORS Support │    │  - Health Check │    │  - Status Track │
          │              └─────────────────┘    └─────────────────┘    └─────────────────┘
          │                       │                       │                       │
          │ HTTP REST API          │ gRPC                  │ gRPC                  │ gRPC

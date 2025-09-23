@@ -2,15 +2,39 @@ syntax = "proto3";
 
 package account;
 
+import "google/api/annotations.proto";
+
 option go_package = "./account";
 
 // Account service definition
 service AccountService {
-  rpc CreateAccount(CreateAccountRequest) returns (CreateAccountResponse);
-  rpc GetAccount(GetAccountRequest) returns (GetAccountResponse);
-  rpc UpdateAccount(UpdateAccountRequest) returns (UpdateAccountResponse);
-  rpc DeleteAccount(DeleteAccountRequest) returns (DeleteAccountResponse);
-  rpc GetBalance(GetBalanceRequest) returns (GetBalanceResponse);
+  rpc CreateAccount(CreateAccountRequest) returns (CreateAccountResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/accounts"
+      body: "*"
+    };
+  }
+  rpc GetAccount(GetAccountRequest) returns (GetAccountResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/accounts/{id}"
+    };
+  }
+  rpc UpdateAccount(UpdateAccountRequest) returns (UpdateAccountResponse) {
+    option (google.api.http) = {
+      put: "/api/v1/accounts/{id}"
+      body: "*"
+    };
+  }
+  rpc DeleteAccount(DeleteAccountRequest) returns (DeleteAccountResponse) {
+    option (google.api.http) = {
+      delete: "/api/v1/accounts/{id}"
+    };
+  }
+  rpc GetBalance(GetBalanceRequest) returns (GetBalanceResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/accounts/{account_id}/balance"
+    };
+  }
 }
 
 // Account message

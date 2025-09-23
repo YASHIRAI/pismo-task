@@ -7,6 +7,7 @@
 package account
 
 import (
+	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -619,11 +620,123 @@ func (x *GetBalanceResponse) GetError() string {
 	return ""
 }
 
+type ListAccountsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Limit         int32                  `protobuf:"varint,1,opt,name=limit,proto3" json:"limit,omitempty"`
+	Offset        int32                  `protobuf:"varint,2,opt,name=offset,proto3" json:"offset,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListAccountsRequest) Reset() {
+	*x = ListAccountsRequest{}
+	mi := &file_account_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListAccountsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListAccountsRequest) ProtoMessage() {}
+
+func (x *ListAccountsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_account_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListAccountsRequest.ProtoReflect.Descriptor instead.
+func (*ListAccountsRequest) Descriptor() ([]byte, []int) {
+	return file_account_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *ListAccountsRequest) GetLimit() int32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+func (x *ListAccountsRequest) GetOffset() int32 {
+	if x != nil {
+		return x.Offset
+	}
+	return 0
+}
+
+type ListAccountsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Accounts      []*Account             `protobuf:"bytes,1,rep,name=accounts,proto3" json:"accounts,omitempty"`
+	Total         int32                  `protobuf:"varint,2,opt,name=total,proto3" json:"total,omitempty"`
+	Error         string                 `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListAccountsResponse) Reset() {
+	*x = ListAccountsResponse{}
+	mi := &file_account_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListAccountsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListAccountsResponse) ProtoMessage() {}
+
+func (x *ListAccountsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_account_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListAccountsResponse.ProtoReflect.Descriptor instead.
+func (*ListAccountsResponse) Descriptor() ([]byte, []int) {
+	return file_account_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *ListAccountsResponse) GetAccounts() []*Account {
+	if x != nil {
+		return x.Accounts
+	}
+	return nil
+}
+
+func (x *ListAccountsResponse) GetTotal() int32 {
+	if x != nil {
+		return x.Total
+	}
+	return 0
+}
+
+func (x *ListAccountsResponse) GetError() string {
+	if x != nil {
+		return x.Error
+	}
+	return ""
+}
+
 var File_account_proto protoreflect.FileDescriptor
 
 const file_account_proto_rawDesc = "" +
 	"\n" +
-	"\raccount.proto\x12\aaccount\"\xbd\x01\n" +
+	"\raccount.proto\x12\aaccount\x1a\x1cgoogle/api/annotations.proto\"\xbd\x01\n" +
 	"\aAccount\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12'\n" +
 	"\x0fdocument_number\x18\x02 \x01(\tR\x0edocumentNumber\x12!\n" +
@@ -662,15 +775,23 @@ const file_account_proto_rawDesc = "" +
 	"account_id\x18\x01 \x01(\tR\taccountId\"D\n" +
 	"\x12GetBalanceResponse\x12\x18\n" +
 	"\abalance\x18\x01 \x01(\x01R\abalance\x12\x14\n" +
-	"\x05error\x18\x02 \x01(\tR\x05error2\x8e\x03\n" +
-	"\x0eAccountService\x12N\n" +
-	"\rCreateAccount\x12\x1d.account.CreateAccountRequest\x1a\x1e.account.CreateAccountResponse\x12E\n" +
+	"\x05error\x18\x02 \x01(\tR\x05error\"C\n" +
+	"\x13ListAccountsRequest\x12\x14\n" +
+	"\x05limit\x18\x01 \x01(\x05R\x05limit\x12\x16\n" +
+	"\x06offset\x18\x02 \x01(\x05R\x06offset\"p\n" +
+	"\x14ListAccountsResponse\x12,\n" +
+	"\baccounts\x18\x01 \x03(\v2\x10.account.AccountR\baccounts\x12\x14\n" +
+	"\x05total\x18\x02 \x01(\x05R\x05total\x12\x14\n" +
+	"\x05error\x18\x03 \x01(\tR\x05error2\xa1\x05\n" +
+	"\x0eAccountService\x12k\n" +
+	"\rCreateAccount\x12\x1d.account.CreateAccountRequest\x1a\x1e.account.CreateAccountResponse\"\x1b\x82\xd3\xe4\x93\x02\x15:\x01*\"\x10/api/v1/accounts\x12d\n" +
 	"\n" +
-	"GetAccount\x12\x1a.account.GetAccountRequest\x1a\x1b.account.GetAccountResponse\x12N\n" +
-	"\rUpdateAccount\x12\x1d.account.UpdateAccountRequest\x1a\x1e.account.UpdateAccountResponse\x12N\n" +
-	"\rDeleteAccount\x12\x1d.account.DeleteAccountRequest\x1a\x1e.account.DeleteAccountResponse\x12E\n" +
+	"GetAccount\x12\x1a.account.GetAccountRequest\x1a\x1b.account.GetAccountResponse\"\x1d\x82\xd3\xe4\x93\x02\x17\x12\x15/api/v1/accounts/{id}\x12p\n" +
+	"\rUpdateAccount\x12\x1d.account.UpdateAccountRequest\x1a\x1e.account.UpdateAccountResponse\" \x82\xd3\xe4\x93\x02\x1a:\x01*\x1a\x15/api/v1/accounts/{id}\x12m\n" +
+	"\rDeleteAccount\x12\x1d.account.DeleteAccountRequest\x1a\x1e.account.DeleteAccountResponse\"\x1d\x82\xd3\xe4\x93\x02\x17*\x15/api/v1/accounts/{id}\x12t\n" +
 	"\n" +
-	"GetBalance\x12\x1a.account.GetBalanceRequest\x1a\x1b.account.GetBalanceResponseB\vZ\t./accountb\x06proto3"
+	"GetBalance\x12\x1a.account.GetBalanceRequest\x1a\x1b.account.GetBalanceResponse\"-\x82\xd3\xe4\x93\x02'\x12%/api/v1/accounts/{account_id}/balance\x12e\n" +
+	"\fListAccounts\x12\x1c.account.ListAccountsRequest\x1a\x1d.account.ListAccountsResponse\"\x18\x82\xd3\xe4\x93\x02\x12\x12\x10/api/v1/accountsB\vZ\t./accountb\x06proto3"
 
 var (
 	file_account_proto_rawDescOnce sync.Once
@@ -684,7 +805,7 @@ func file_account_proto_rawDescGZIP() []byte {
 	return file_account_proto_rawDescData
 }
 
-var file_account_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_account_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_account_proto_goTypes = []any{
 	(*Account)(nil),               // 0: account.Account
 	(*CreateAccountRequest)(nil),  // 1: account.CreateAccountRequest
@@ -697,26 +818,31 @@ var file_account_proto_goTypes = []any{
 	(*DeleteAccountResponse)(nil), // 8: account.DeleteAccountResponse
 	(*GetBalanceRequest)(nil),     // 9: account.GetBalanceRequest
 	(*GetBalanceResponse)(nil),    // 10: account.GetBalanceResponse
+	(*ListAccountsRequest)(nil),   // 11: account.ListAccountsRequest
+	(*ListAccountsResponse)(nil),  // 12: account.ListAccountsResponse
 }
 var file_account_proto_depIdxs = []int32{
 	0,  // 0: account.CreateAccountResponse.account:type_name -> account.Account
 	0,  // 1: account.GetAccountResponse.account:type_name -> account.Account
 	0,  // 2: account.UpdateAccountResponse.account:type_name -> account.Account
-	1,  // 3: account.AccountService.CreateAccount:input_type -> account.CreateAccountRequest
-	3,  // 4: account.AccountService.GetAccount:input_type -> account.GetAccountRequest
-	5,  // 5: account.AccountService.UpdateAccount:input_type -> account.UpdateAccountRequest
-	7,  // 6: account.AccountService.DeleteAccount:input_type -> account.DeleteAccountRequest
-	9,  // 7: account.AccountService.GetBalance:input_type -> account.GetBalanceRequest
-	2,  // 8: account.AccountService.CreateAccount:output_type -> account.CreateAccountResponse
-	4,  // 9: account.AccountService.GetAccount:output_type -> account.GetAccountResponse
-	6,  // 10: account.AccountService.UpdateAccount:output_type -> account.UpdateAccountResponse
-	8,  // 11: account.AccountService.DeleteAccount:output_type -> account.DeleteAccountResponse
-	10, // 12: account.AccountService.GetBalance:output_type -> account.GetBalanceResponse
-	8,  // [8:13] is the sub-list for method output_type
-	3,  // [3:8] is the sub-list for method input_type
-	3,  // [3:3] is the sub-list for extension type_name
-	3,  // [3:3] is the sub-list for extension extendee
-	0,  // [0:3] is the sub-list for field type_name
+	0,  // 3: account.ListAccountsResponse.accounts:type_name -> account.Account
+	1,  // 4: account.AccountService.CreateAccount:input_type -> account.CreateAccountRequest
+	3,  // 5: account.AccountService.GetAccount:input_type -> account.GetAccountRequest
+	5,  // 6: account.AccountService.UpdateAccount:input_type -> account.UpdateAccountRequest
+	7,  // 7: account.AccountService.DeleteAccount:input_type -> account.DeleteAccountRequest
+	9,  // 8: account.AccountService.GetBalance:input_type -> account.GetBalanceRequest
+	11, // 9: account.AccountService.ListAccounts:input_type -> account.ListAccountsRequest
+	2,  // 10: account.AccountService.CreateAccount:output_type -> account.CreateAccountResponse
+	4,  // 11: account.AccountService.GetAccount:output_type -> account.GetAccountResponse
+	6,  // 12: account.AccountService.UpdateAccount:output_type -> account.UpdateAccountResponse
+	8,  // 13: account.AccountService.DeleteAccount:output_type -> account.DeleteAccountResponse
+	10, // 14: account.AccountService.GetBalance:output_type -> account.GetBalanceResponse
+	12, // 15: account.AccountService.ListAccounts:output_type -> account.ListAccountsResponse
+	10, // [10:16] is the sub-list for method output_type
+	4,  // [4:10] is the sub-list for method input_type
+	4,  // [4:4] is the sub-list for extension type_name
+	4,  // [4:4] is the sub-list for extension extendee
+	0,  // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_account_proto_init() }
@@ -730,7 +856,7 @@ func file_account_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_account_proto_rawDesc), len(file_account_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   11,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

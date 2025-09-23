@@ -2,12 +2,18 @@ syntax = "proto3";
 
 package health;
 
+import "google/api/annotations.proto";
+
 option go_package = "github.com/YASHIRAI/pismo-task/proto/health";
 
 // Health service definition
 service HealthService {
   // Health check
-  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/health"
+    };
+  }
 }
 
 message HealthCheckRequest {}
