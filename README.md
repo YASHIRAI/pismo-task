@@ -24,60 +24,74 @@ This project implements a complete financial services platform using a microserv
 
 ## User Interface
 
-The application includes a modern web-based UI built with Streamlit that provides an intuitive interface for testing and managing the financial services platform.
+The application includes a modern web-based UI built with Streamlit that provides an intuitive interface for testing and managing the financial services platform. The interface is accessible at `http://localhost:8501` and provides comprehensive functionality for all system operations.
 
 ### Dashboard Overview
-![System Dashboard](docs/screenshots/dashboard.png)
-*System dashboard showing service status and health monitoring*
+![System Dashboard](docs/screenshots/01-dashboard-overview.png)
+*System dashboard showing service status and health monitoring with real-time service indicators*
 
 ### Account Management
-![Account Management](docs/screenshots/account-management.png)
-*Account creation, viewing, and balance checking interface*
+
+#### Account Creation
+![Account Creation](docs/screenshots/02-account-creation.png)
+*Account creation form with document number validation and account type selection*
+
+#### Account View
+![Account View](docs/screenshots/03-account-view.png)
+*Account details display showing account information and metadata*
+
+#### Account Balance Check
+![Account Balance](docs/screenshots/07-account-balance.png)
+*Balance checking interface with current balance display*
 
 ### Transaction Management
-![Transaction Management](docs/screenshots/transaction-management.png)
-*Transaction creation, viewing, and history management*
+
+#### Transaction Creation
+![Transaction Creation](docs/screenshots/04-transaction-creation.png)
+*Transaction creation form with operation type selection and amount input*
+
+#### Transaction View
+![Transaction View](docs/screenshots/05-transaction-view.png)
+*Transaction details display with comprehensive transaction information*
+
+#### Transaction History
+![Transaction History](docs/screenshots/06-transaction-history.png)
+*Transaction history table with pagination and filtering capabilities*
 
 ### System Health Monitoring
-![Health Monitoring](docs/screenshots/health-monitoring.png)
-*Real-time health status of all services and database connectivity*
+![Health Monitoring](docs/screenshots/08-health-monitoring.png)
+*Real-time health status of all services and database connectivity with detailed system information*
 
-### Screenshot Instructions
+### Additional Features
+![Additional Features](docs/screenshots/09-additional-feature.png)
+*Additional system features and configuration options*
 
-To add actual screenshots to this README:
+### Screenshot Gallery
 
-1. **Start the Application**: Run the Streamlit UI at `http://localhost:8501`
-2. **Take Screenshots**: Capture each interface section
-3. **Crop Images**: Focus on relevant UI elements, exclude browser chrome and OS elements
-4. **Save Files**: Save as PNG files in `docs/screenshots/` directory
+The following screenshots demonstrate the complete functionality of the Pismo Financial Services platform:
 
-#### Detailed Cropping Guidelines
+| Feature | Screenshot | Description |
+|---------|------------|-------------|
+| **Dashboard** | ![Dashboard](docs/screenshots/01-dashboard-overview.png) | System overview with service status |
+| **Account Creation** | ![Account Creation](docs/screenshots/02-account-creation.png) | Create new accounts with validation |
+| **Account View** | ![Account View](docs/screenshots/03-account-view.png) | View account details and metadata |
+| **Transaction Creation** | ![Transaction Creation](docs/screenshots/04-transaction-creation.png) | Process financial transactions |
+| **Transaction View** | ![Transaction View](docs/screenshots/05-transaction-view.png) | View transaction details |
+| **Transaction History** | ![Transaction History](docs/screenshots/06-transaction-history.png) | Browse transaction history |
+| **Account Balance** | ![Account Balance](docs/screenshots/07-account-balance.png) | Check account balances |
+| **Health Monitoring** | ![Health Monitoring](docs/screenshots/08-health-monitoring.png) | Monitor system health |
+| **Additional Features** | ![Additional Features](docs/screenshots/09-additional-feature.png) | Additional system features |
 
-**dashboard.png** - System Dashboard
-- **Crop Focus**: Main dashboard panel with service status cards (Gateway, Account Service, Transaction Service) and system health banner
-- **Exclude**: Browser chrome, macOS menu bar, dock
-- **Dimensions**: Focus on main content area (~1200x800px)
+### Interface Features
 
-**account-management.png** - Account Management
-- **Crop Focus**: Account creation form, account details display, and balance checking interface
-- **Exclude**: Browser chrome, sidebar (keep only relevant parts)
-- **Dimensions**: Focus on account management section (~1000x700px)
+The web interface provides the following key features:
 
-**transaction-management.png** - Transaction Management
-- **Crop Focus**: Transaction creation form, transaction history table, and transaction details
-- **Exclude**: Browser chrome, macOS elements
-- **Dimensions**: Focus on transaction management area (~1200x900px)
-
-**health-monitoring.png** - Health Monitoring
-- **Crop Focus**: Health status display, service status indicators, and system information
-- **Exclude**: Browser chrome, macOS elements
-- **Dimensions**: Focus on health monitoring section (~1000x600px)
-
-#### Tools for Cropping
-- **macOS**: Preview app or Screenshot app with built-in cropping
-- **Windows**: Snipping Tool or Paint 3D
-- **Linux**: GIMP, ImageMagick, or built-in screenshot tools
-- **Online**: Canva, Photopea, or similar online editors
+- **Interactive Dashboard**: Real-time monitoring of all services with status indicators
+- **Account Operations**: Complete account lifecycle management with validation
+- **Transaction Processing**: Full transaction workflow with history tracking
+- **Health Monitoring**: Comprehensive system health checks and status reporting
+- **Responsive Design**: Clean, modern interface optimized for different screen sizes
+- **Real-time Feedback**: Success/error messages and live data updates
 
 ### Key Features
 
@@ -684,7 +698,7 @@ The web interface provides:
 - **System Dashboard**: Monitor service health and system status
 - **Real-time Updates**: Live status monitoring of all services
 
-See the [User Interface](#user-interface) section above for screenshots of the web interface.
+See the [User Interface](#user-interface) section above for comprehensive screenshots of all web interface features.
 
 ### Environment Variables
 
